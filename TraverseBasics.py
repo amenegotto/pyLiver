@@ -1,6 +1,8 @@
 import os
 import pydicom
 
+# Count and identify CT and MRI images recursively in a directory
+
 for dirpath, dirs, files in os.walk("/home/amenegotto/Desktop/tcga-lihc"):	 
 	path = dirpath.split('/')
 	print('|', (len(path))*'---', '[',os.path.basename(dirpath),']')

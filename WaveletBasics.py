@@ -5,6 +5,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 from skimage.io import imread, imsave
 
+# Try some wavelets filters to compress image.
+# PNG is a lossless compression image format. This fact can explain
+# why file size keep almost the same...
+# Is this really needed?
+
+
 # read image
 ds = pydicom.dcmread("dcm/000001.dcm")
 

@@ -3,6 +3,8 @@ import pydicom
 import numpy as np
 import matplotlib.pyplot as plt
 
+#Numpy basics
+
 # read image
 ds = pydicom.dcmread("dcm/000001.dcm")
 
