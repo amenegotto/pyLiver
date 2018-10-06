@@ -18,8 +18,8 @@ path='/home/amenegotto/Downloads/'
 train_data_dir = path + 'cars/trein'
 validation_data_dir = path + 'cars/valid'
 test_data_dir = path + 'cars/test'
-epochs = 500
-batch_size = 10
+epochs = 50
+batch_size = 20
 
 if K.image_data_format() == 'channels_first':
     input_s = (3, img_width, img_height)
