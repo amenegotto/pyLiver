@@ -8,6 +8,7 @@ from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense
 from keras import backend as K
+from keras.callbacks import Callback
 
 # dimensions of our images.
 img_width, img_height = 150, 150
@@ -19,7 +20,7 @@ test_data_dir = 'C:/Users/hp/Downloads/cars_train/test'
 nb_train_samples = 12
 nb_validation_samples = 5
 epochs = 50
-batch_size = 5
+batch_size = 15
 
 if K.image_data_format() == 'channels_first':
     input_s = (3, img_width, img_height)
@@ -43,18 +44,18 @@ model.add(MaxPooling2D(pool_size=(2, 2)))
 model.add(Flatten())  # this converts our 3D feature maps to 1D feature vectors
 model.add(Dense(64))
 model.add(Activation('relu'))
-model.add(Dropout(0.5))
+model.add(Dropout(0.35))
 model.add(Dense(1))
 model.add(Activation('sigmoid'))
 
 #compile model using accuracy as main metric, rmsprop (gradient descendent)
 model.compile(loss='binary_crossentropy',
-              optimizer='rmsprop',
+              optimizer='nadam',
               metrics=['accuracy'])
 
 # this is the augmentation configuration we will use for training
 train_datagen = ImageDataGenerator(
-        rotation_range=40,
+        rotation_range=50,
         width_shift_range=0.2,
         height_shift_range=0.2,
         rescale=1./255,
@@ -85,12 +86,18 @@ test_generator = test_datagen.flow_from_directory(
     batch_size=batch_size,
     class_mode='binary')
 
+from keras.callbacks import TensorBoard
+
+tensorboard = TensorBoard(log_dir='logs/run3/', histogram_freq=0,
+                          write_graph=True, write_images=True)
+
 history = model.fit_generator(
     train_generator,
-    steps_per_epoch=20,
+    steps_per_epoch=25,
     epochs=epochs,
     validation_data=validation_generator,
-    validation_steps=5)
+    validation_steps=5,
+    callbacks=[tensorboard])
 
 # plot history
 loss_list = [s for s in history.history.keys() if 'loss' in s and 'val' not in s]
