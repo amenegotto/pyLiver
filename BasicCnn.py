@@ -14,9 +14,10 @@ from keras.callbacks import Callback
 img_width, img_height = 150, 150
 
 # network parameters
-train_data_dir = '/home/amenegotto/Downloads/cars/trein'
-validation_data_dir = '/home/amenegotto/Downloads/cars/valid'
-test_data_dir = '/home/amenegotto/Downloads/cars/test'
+path='c:/users/hp/Downloads/cars_train/'
+train_data_dir = path + 'trein'
+validation_data_dir = path + 'valid'
+test_data_dir = path + 'test'
 nb_train_samples = 25
 nb_validation_samples = 5
 epochs = 10
@@ -29,11 +30,11 @@ else:
 
 #define model
 model = Sequential()
-model.add(Conv2D(32, (3, 3), input_shape=input_s))
+model.add(Conv2D(32, (5, 5), input_shape=input_s))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(4, 4)))
 
-model.add(Conv2D(64, (3, 3)))
+model.add(Conv2D(64, (5, 5)))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(3, 3)))
 
