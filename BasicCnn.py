@@ -14,12 +14,12 @@ from keras.callbacks import Callback
 img_width, img_height = 150, 150
 
 # network parameters
-train_data_dir = 'C:/Users/hp/Downloads/cars_train/trein'
-validation_data_dir = 'C:/Users/hp/Downloads/cars_train/valid'
-test_data_dir = 'C:/Users/hp/Downloads/cars_train/test'
-nb_train_samples = 12
+train_data_dir = '/home/amenegotto/Downloads/cars/trein'
+validation_data_dir = '/home/amenegotto/Downloads/cars/valid'
+test_data_dir = '/home/amenegotto/Downloads/cars/test'
+nb_train_samples = 25
 nb_validation_samples = 5
-epochs = 50
+epochs = 10
 batch_size = 15
 
 if K.image_data_format() == 'channels_first':
@@ -31,36 +31,32 @@ else:
 model = Sequential()
 model.add(Conv2D(32, (3, 3), input_shape=input_s))
 model.add(Activation('relu'))
-model.add(MaxPooling2D(pool_size=(2, 2)))
-
-model.add(Conv2D(32, (3, 3)))
-model.add(Activation('relu'))
-model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(MaxPooling2D(pool_size=(4, 4)))
 
 model.add(Conv2D(64, (3, 3)))
 model.add(Activation('relu'))
-model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(MaxPooling2D(pool_size=(3, 3)))
 
 model.add(Flatten())  # this converts our 3D feature maps to 1D feature vectors
 model.add(Dense(64))
 model.add(Activation('relu'))
-model.add(Dropout(0.35))
+model.add(Dropout(0.10))
 model.add(Dense(1))
 model.add(Activation('sigmoid'))
 
 #compile model using accuracy as main metric, rmsprop (gradient descendent)
 model.compile(loss='binary_crossentropy',
-              optimizer='nadam',
-              metrics=['accuracy'])
+               optimizer='adam',
+               metrics=['accuracy'])
 
 # this is the augmentation configuration we will use for training
 train_datagen = ImageDataGenerator(
-        rotation_range=50,
-        width_shift_range=0.2,
-        height_shift_range=0.2,
+        rotation_range=60,
+        width_shift_range=0.4,
+        height_shift_range=0.4,
         rescale=1./255,
-        shear_range=0.2,
-        zoom_range=0.2,
+        shear_range=0.4,
+        zoom_range=0.4,
         horizontal_flip=True,
         fill_mode='nearest')
 
@@ -88,7 +84,7 @@ test_generator = test_datagen.flow_from_directory(
 
 from keras.callbacks import TensorBoard
 
-tensorboard = TensorBoard(log_dir='logs/run3/', histogram_freq=0,
+tensorboard = TensorBoard(log_dir='/tmp/log/', histogram_freq=0,
                           write_graph=True, write_images=True)
 
 history = model.fit_generator(
