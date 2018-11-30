@@ -11,17 +11,16 @@ from keras import backend as K
 from keras.callbacks import Callback
 
 # dimensions of our images.
-img_width, img_height = 150, 150
+img_width, img_height = 96, 96
 
 # network parameters
-path='c:/users/hp/Downloads/cars_train/'
+#path='c:/users/hp/Downloads/cars_train/'
+path='/home/amenegotto/Downloads/cars/'
 train_data_dir = path + 'trein'
 validation_data_dir = path + 'valid'
 test_data_dir = path + 'test'
-nb_train_samples = 25
-nb_validation_samples = 5
-epochs = 10
-batch_size = 15
+epochs = 20
+batch_size = 25
 
 if K.image_data_format() == 'channels_first':
     input_s = (3, img_width, img_height)
@@ -30,16 +29,20 @@ else:
 
 #define model
 model = Sequential()
-model.add(Conv2D(32, (5, 5), input_shape=input_s))
+model.add(Conv2D(64, (5, 5), input_shape=input_s, kernel_initializer='glorot_uniform'))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(4, 4)))
 
-model.add(Conv2D(64, (5, 5)))
+model.add(Conv2D(48, (5, 5), kernel_initializer='glorot_uniform'))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(3, 3)))
+
+model.add(Conv2D(32, (3, 3), kernel_initializer='glorot_uniform'))
 model.add(Activation('relu'))
 model.add(MaxPooling2D(pool_size=(3, 3)))
 
 model.add(Flatten())  # this converts our 3D feature maps to 1D feature vectors
-model.add(Dense(64))
+model.add(Dense(32, kernel_initializer='glorot_uniform'))
 model.add(Activation('relu'))
 model.add(Dropout(0.10))
 model.add(Dense(1))
@@ -52,12 +55,12 @@ model.compile(loss='binary_crossentropy',
 
 # this is the augmentation configuration we will use for training
 train_datagen = ImageDataGenerator(
-        rotation_range=60,
-        width_shift_range=0.4,
-        height_shift_range=0.4,
+        rotation_range=40,
+        width_shift_range=0.3,
+        height_shift_range=0.3,
         rescale=1./255,
-        shear_range=0.4,
-        zoom_range=0.4,
+        shear_range=0.2,
+        zoom_range=0.2,
         horizontal_flip=True,
         fill_mode='nearest')
 
@@ -86,7 +89,7 @@ test_generator = test_datagen.flow_from_directory(
 from keras.callbacks import TensorBoard
 
 tensorboard = TensorBoard(log_dir='/tmp/log/', histogram_freq=0,
-                          write_graph=True, write_images=True)
+                          write_graph=True, write_images=False)
 
 history = model.fit_generator(
     train_generator,
