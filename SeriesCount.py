@@ -2,7 +2,10 @@ import os
 
 # Count CT series and files recursively
 
-SRC_DIR="C:/Users/hp/Downloads/tcga-lihc/TCGA-LIHC_CT_DCM/"
+#SRC_DIR="C:/Users/hp/Downloads/tcga-lihc/TCGA-LIHC_CT_DCM/"
+#SRC_DIR="C:/Users/hp\Downloads/tcga-kirp/TCGA-KIRP_CT/"
+#SRC_DIR="C:/Users/hp/Downloads/tcga-stad/TCGA-STAD/"
+SRC_DIR="C:/Users/hp/Downloads/cptac-pda/CPTAC-PDA/"
 
 qtd = 0
 pathlist=[]

@@ -4,7 +4,7 @@ import pydicom
 
 # Remove all dicom images recursively, keeping only axial studies.
 
-SRC_DIR="/tmp/ctpac-pda/"
+SRC_DIR="C:/Users/hp/Downloads/tcga-lihc/TCGA-LIHC_CT_DCM/"
 
 for dirpath, dirs, files in os.walk(SRC_DIR):	 
 	path = dirpath.split('/')

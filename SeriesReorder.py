@@ -7,7 +7,8 @@ from operator import itemgetter
 # rename directories recursively in dicom ordered
 # to make it easy to exclude non-liver related slices
 
-SRC_DIR='/home/amenegotto/Desktop/tcga-lihc'
+#SRC_DIR='/home/amenegotto/Desktop/tcga-lihc'
+SRC_DIR='C:/Users/hp/Downloads/tcga-lihc'
 
 def dicom_reorder(inputdir, outputdir):
     print('Reordering ' + inputdir)
