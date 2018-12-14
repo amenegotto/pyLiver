@@ -2,10 +2,11 @@ import os
 import pydicom
 import pywt
 import numpy as np
-import matplotlib.pyplot as plt
+from scipy.misc import imsave
 
 # PURPOSE: 
-# create image dataset without pre-processing step, just converting to PNG.
+# Create image dataset without pre-processing step (filters, denoising, etc.).
+# Just convert DICOM to PNG keeping the patient's reference (path) 
 
 #SRC_DIR='C:/Users/hp/Downloads/tcga-lihc'
 SRC_DIR='/home/amenegotto/tcga-lihc'
@@ -32,8 +33,7 @@ def Ct2Png(file_path, file_name):
     
     imgs = np.array(image, dtype=np.float64)
 
-    bimg = plt.imshow(imgs, cmap=plt.cm.bone)
-    plt.savefig(dst_name)
+    imsave(dst_name, imgs)
 
 def dcm_dir_convert(inputdir):
     for f in os.listdir(inputdir):
