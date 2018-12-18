@@ -10,8 +10,8 @@ from scipy.misc import imsave
 # Just convert DICOM to PNG creating one UUID for each slice and storing this UUID on a CSV to keep track.
 # If needed, it can keep the patient's reference (path) 
 
-SRC_DIR='C:/Users/hp/Downloads/tcga-lihc/TCGA-LIHC_CT_DCM'
-OUT_DIR='C:/Users/hp/Downloads/tcga-lihc/tcga-lihc-png'
+SRC_DIR='C:/Users/hp/Downloads/cptac-pda/cptac-pda'
+OUT_DIR='C:/Users/hp/Downloads/cptac-pda/cptac-pda-png'
 #SRC_DIR='/home/amenegotto/tcga-lihc'
 #OUT_DIR='/tmp/tcga-lihc-png'
 CSV_FILENAME='images-id-without-filters.csv'
@@ -19,10 +19,16 @@ CSV_FILENAME='images-id-without-filters.csv'
 def create_image_id(file_path, file_name):
     slice_id = uuid.uuid4().hex
     path = file_path.split(os.sep)
+
+    if 'lihc' in path[0].lower():
+        hcc_class = 'POS'
+    else:
+        hcc_class = 'NEG'
+
 #    print(path, ',',file_name, ',', slice_id, path[1] + '_' + slice_id + '.png')
     fname = path[1] + '_' + slice_id + '.png' 
     with open(CSV_FILENAME, "a") as f:
-        f.write(', '.join(path) + ',' + file_name + ',' + slice_id + ',' + fname + '\n')
+        f.write(OUT_DIR + ',' + path[1] + ',' + path[2] + ',' + path[3] + ',' + file_name + ',' + slice_id + ',' + fname + ',' + hcc_class + ', , \n')
     return fname
 
 def ct_to_png(file_path, file_name, keep_dir = True):
@@ -55,7 +61,11 @@ def dcm_dir_convert(inputdir):
     for f in os.listdir(inputdir):
         if not os.path.isdir(inputdir + f):
            ct_to_png(inputdir, f, False)
-           create_image_id(inputdir, f)
+
+
+# create CSV header
+#with open(CSV_FILENAME, "a") as x:
+#    x.write('base_path, patient, study, series, dcm_fname, slice_uid, png_fname, hcc_class, dataset, dclass \n')
 
 # search recursively for dcm directories
 pathlist=[]

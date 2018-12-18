@@ -6,8 +6,10 @@ from shutil import copyfile
 # Reproduce in the filesystem the dataset division (train, validation and test) done in a CSV file
 # Don't forget to adjust the CSV header accordingly
 
-CSV_FILE="/home/amenegotto/Downloads/slices-id.csv"
-DST_BASEPATH = "/tmp/"
+#CSV_FILE="/home/amenegotto/Downloads/slices-id.csv"
+CSV_FILE="C:/Users/hp/dataset/images/2d/slices-id.csv"
+#DST_BASEPATH = "/tmp/"
+DST_BASEPATH = "C:/Users/hp/dataset/images/2d"
 
 TRAIN_DIR = "/train"
 VALID_DIR = "/valid"
@@ -22,18 +24,16 @@ def create_dir(create_dir = False):
         os.makedirs(DST_BASEPATH + POSITIVE_DIR + VALID_DIR, exist_ok=True)
         os.makedirs(DST_BASEPATH + POSITIVE_DIR + TEST_DIR, exist_ok=True)
         os.makedirs(DST_BASEPATH + NEGATIVE_DIR + TRAIN_DIR, exist_ok=True)
-        os.makedirs(DST_BASEPATH + NEVATIVE_DIR + VALID_DIR, exist_ok=True)
-        os.makedirs(DST_BASEPATH + NEVATIVE_DIR + TEST_DIR, exist_ok=True)
+        os.makedirs(DST_BASEPATH + NEGATIVE_DIR + VALID_DIR, exist_ok=True)
+        os.makedirs(DST_BASEPATH + NEGATIVE_DIR + TEST_DIR, exist_ok=True)
 
-
-
-create_dir(true)
+create_dir(True)
 
 df = pd.read_csv(CSV_FILE)
 for row in df.itertuples():
     print(row)
 
-    src_fname = row.base_path + '/' + row.patient + '/' + row.study + '/' + row.series + row.png_fname
+    src_fname = row.base_path + '/' + row.png_fname
     
     dst_fname = DST_BASEPATH
 
@@ -44,7 +44,7 @@ for row in df.itertuples():
 
     if row.dataset == 'TREIN':
         dst_fname = dst_fname + TRAIN_DIR
-    elif row.dataset == 'VALID':
+    elif row.dataset == 'VALIDA':
         dst_fname = dst_fname + VALID_DIR
     else:
         dst_fname = dst_fname + TEST_DIR     
