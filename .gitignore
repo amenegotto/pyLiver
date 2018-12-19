@@ -9,6 +9,7 @@ __pycache__/
 *.py.un~
 logs/
 
+.idea/
 # Distribution / packaging
 .Python
 build/
