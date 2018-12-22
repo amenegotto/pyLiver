@@ -1,13 +1,12 @@
 
 # PURPOSE:
-# Random forest regression for missing data imputation (DRAFT VERSION)
+# Random forest regression for numeric missing data imputation
 
 import pandas as pd  
 import numpy as np  
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn import metrics
-from sklearn.cross_validation import cross_val_score
 from sklearn import model_selection
 
 import matplotlib.pyplot as plt
@@ -15,7 +14,7 @@ import matplotlib.pyplot as plt
 COLUMN_NAME = 'Creatinine'
 log_importance = False
 performance_range = False
-use_crossvalidation = False
+use_crossvalidation = True
 
 df = pd.read_csv('csv/hcc-data-spline-best-features.csv')
 
@@ -24,7 +23,7 @@ X = df.iloc[:, df.columns != COLUMN_NAME].values
 y = df.iloc[:, df.columns.get_loc(COLUMN_NAME)].values
 
 
-# divides in test/validation with 80/20
+# divides in test/validation with 90/10
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=42)
 
 # the n_estimators value should be tested. Lower RMSE is better...
@@ -56,20 +55,21 @@ if not use_crossvalidation:
     print('Mean Squared Error:', metrics.mean_squared_error(y_test, y_pred))
     print('Root Mean Squared Error:', np.sqrt(metrics.mean_squared_error(y_test, y_pred)))
 else:
-    cv = model_selection.KFold(n_splits=10)
+    cv = model_selection.KFold(n_splits=2)
 
     for train_index, test_index in cv.split(X):
         print('TRAIN:', train_index, 'TEST:', test_index)
         X_train, X_test = X[train_index], X[test_index]
         y_train, y_test = y[train_index], y[test_index]
-        regressor.set_params(n_estimators=290)
-        regressor.fit(X_train, y_train) 
-        y_pred = regressor.predict(X_test)
-        print("Input=%s, Predicted=%s" % (X_test[0], y_pred[0]))
-        print('R2 Score:', metrics.r2_score(y_test, y_pred))
-        print('Mean Absolute Error:', metrics.mean_absolute_error(y_test, y_pred))
-        print('Mean Squared Error:', metrics.mean_squared_error(y_test, y_pred))
-        print('Root Mean Squared Error:', np.sqrt(metrics.mean_squared_error(y_test, y_pred)))
+        regressor.set_params(n_estimators=62)
+        regressor.fit(X_train, y_train)
+
+    y_pred = regressor.predict(X_test)
+    print("Input=%s, Predicted=%s" % (X_test[0], y_pred[0]))
+    print('R2 Score:', metrics.r2_score(y_test, y_pred))
+    print('Mean Absolute Error:', metrics.mean_absolute_error(y_test, y_pred))
+    print('Mean Squared Error:', metrics.mean_squared_error(y_test, y_pred))
+    print('Root Mean Squared Error:', np.sqrt(metrics.mean_squared_error(y_test, y_pred)))
 
 
 if log_importance:
