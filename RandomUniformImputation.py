@@ -1,6 +1,7 @@
 # PURPOSE:
-# Do Uniform distribution imputation on exams based on references values grouped by age and sex
+# Do Uniform distribution imputation on exams results based on references values grouped by age and sex
 # extracted from peer-reviewed scientific studies
+# It should be used when only age and gender columns are filled
 
 import numpy as np
 import pandas as pd
