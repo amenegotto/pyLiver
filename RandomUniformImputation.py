@@ -5,7 +5,11 @@
 
 import numpy as np
 import pandas as pd
+import math
 
+def truncate(number, digits) -> float:
+    stepper = pow(10.0, digits)
+    return math.trunc(stepper * number) / stepper
 
 def calculate_value(d, exam, gender, age):
     for ir, rr in d[(d.Gender == gender) & (d.Exam == exam)].iterrows():
@@ -22,11 +26,11 @@ df_rr = pd.read_csv('csv/reference-range.csv')
 df = pd.read_csv('csv/input-uniform.csv')
 
 for i, r in df.iterrows():
-    df.at[i, 'AFP'] = calculate_value(df_rr, 'AFP', r['Gender'], r['Age'])
-    df.at[i, 'Platelets'] = calculate_value(df_rr, 'Platelets', r['Gender'], r['Age'])
-    df.at[i, 'Prothrombin Time'] = calculate_value(df_rr, 'Prothrombin Time', r['Gender'], r['Age'])
-    df.at[i, 'Albumin'] = calculate_value(df_rr, 'Albumin', r['Gender'], r['Age'])
-    df.at[i, 'Total Bilirubin'] = calculate_value(df_rr, 'Total Bilirubin', r['Gender'], r['Age'])
-    df.at[i, 'Creatinine'] = calculate_value(df_rr, 'Creatinine', r['Gender'], r['Age'])
+    df.at[i, 'AFP'] = truncate(calculate_value(df_rr, 'AFP', r['Gender'], r['Age']), 0)
+    df.at[i, 'Platelets'] = truncate(calculate_value(df_rr, 'Platelets', r['Gender'], r['Age']), 0)
+    df.at[i, 'Prothrombin Time'] = truncate(calculate_value(df_rr, 'Prothrombin Time', r['Gender'], r['Age']), 1)
+    df.at[i, 'Albumin'] = truncate(calculate_value(df_rr, 'Albumin', r['Gender'], r['Age']), 1)
+    df.at[i, 'Total Bilirubin'] = truncate(calculate_value(df_rr, 'Total Bilirubin', r['Gender'], r['Age']), 1)
+    df.at[i, 'Creatinine'] = truncate(calculate_value(df_rr, 'Creatinine', r['Gender'], r['Age']), 1)
 
 df.to_csv('csv/uniform-inputation.csv')
