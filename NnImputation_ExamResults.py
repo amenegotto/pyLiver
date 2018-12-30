@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 from tensorflow.python.keras.models import Sequential
 from tensorflow.python.keras.layers import Dense
 
-def create_model:
+def create_model():
     model = Sequential()
     model.add(Dense(6, input_dim=6, kernel_initializer='normal', activation='relu'))
     model.add(Dense(4, activation='relu'))
