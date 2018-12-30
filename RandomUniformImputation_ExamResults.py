@@ -22,8 +22,8 @@ def calculate_value(d, exam, gender, age):
             return val
 
 
-df_rr = pd.read_csv('csv/reference-range.csv')
-df = pd.read_csv('csv/input-uniform.csv')
+df_rr = pd.read_csv('csv/reference-range-examresults.csv')
+df = pd.read_csv('csv/input-uniform-examresults-cptac.csv')
 
 for i, r in df.iterrows():
     df.at[i, 'AFP'] = truncate(calculate_value(df_rr, 'AFP', r['Gender'], r['Age']), 0)
@@ -33,4 +33,4 @@ for i, r in df.iterrows():
     df.at[i, 'Total Bilirubin'] = truncate(calculate_value(df_rr, 'Total Bilirubin', r['Gender'], r['Age']), 1)
     df.at[i, 'Creatinine'] = truncate(calculate_value(df_rr, 'Creatinine', r['Gender'], r['Age']), 1)
 
-df.to_csv('csv/uniform-inputation.csv')
+df.to_csv('csv/uniform-inputation-examresults-cptac.csv')
