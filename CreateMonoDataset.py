@@ -1,6 +1,5 @@
 import os
 import pydicom
-import pywt
 import numpy as np
 import uuid
 from scipy.misc import imsave
