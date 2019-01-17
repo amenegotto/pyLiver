@@ -1,5 +1,5 @@
 # PURPOSE:
-# unimodal DCNN for hepatocarcinoma computer-aided diagnosis
+# unimodal DCNN for hepatocarcinoma computer-aided diagnosis (DRAFT)
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -10,14 +10,14 @@ from keras.layers import Activation, Dropout, Flatten, Dense
 from keras import backend as K
 
 # figure output
-OUTPUT_FILENAME = '/home/amenegotto/dataset/2d/results/sem_pre_proc.png'
+OUTPUT_FILENAME = '/tmp/sem_pre_proc.png'
 
 # dimensions of our images.
 img_width, img_height = 96, 96
 
 # network parameters
-path='/home/amenegotto/dataset/2d/sem_pre_proc/'
-#path='/mnt/images/com_pre_proc/'
+#path='/home/amenegotto/dataset/2d/sem_pre_proc/'
+path='/mnt/data/image/2d/sem_pre_proc/'
 train_data_dir = path + 'train'
 validation_data_dir = path + 'valid'
 test_data_dir = path + 'test'
