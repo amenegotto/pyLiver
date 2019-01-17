@@ -20,12 +20,12 @@ NEGATIVE_DIR = "/nok"
 
 def create_dir(create_dir = False):
     if create_dir: 
-        os.makedirs(DST_BASEPATH + POSITIVE_DIR + TRAIN_DIR, exist_ok=True)
-        os.makedirs(DST_BASEPATH + POSITIVE_DIR + VALID_DIR, exist_ok=True)
-        os.makedirs(DST_BASEPATH + POSITIVE_DIR + TEST_DIR, exist_ok=True)
-        os.makedirs(DST_BASEPATH + NEGATIVE_DIR + TRAIN_DIR, exist_ok=True)
-        os.makedirs(DST_BASEPATH + NEGATIVE_DIR + VALID_DIR, exist_ok=True)
-        os.makedirs(DST_BASEPATH + NEGATIVE_DIR + TEST_DIR, exist_ok=True)
+        os.makedirs(DST_BASEPATH + TRAIN_DIR + POSITIVE_DIR, exist_ok=True)
+        os.makedirs(DST_BASEPATH + TRAIN_DIR + NEGATIVE_DIR, exist_ok=True)
+        os.makedirs(DST_BASEPATH + VALID_DIR + POSITIVE_DIR, exist_ok=True)
+        os.makedirs(DST_BASEPATH + VALID_DIR + NEGATIVE_DIR, exist_ok=True)
+        os.makedirs(DST_BASEPATH + TEST_DIR + POSITIVE_DIR, exist_ok=True)
+        os.makedirs(DST_BASEPATH + TEST_DIR + NEGATIVE_DIR, exist_ok=True)
 
 create_dir(True)
 
@@ -37,17 +37,18 @@ for row in df.itertuples():
     
     dst_fname = DST_BASEPATH
 
-    if row.hcc_class[:3] == 'POS':
-        dst_fname = dst_fname + POSITIVE_DIR
-    else:
-        dst_fname = dst_fname + NEGATIVE_DIR
-
     if row.dataset == 'TREIN':
         dst_fname = dst_fname + TRAIN_DIR
     elif row.dataset == 'VALIDA':
         dst_fname = dst_fname + VALID_DIR
     else:
         dst_fname = dst_fname + TEST_DIR     
+
+    if row.hcc_class[:3] == 'POS':
+        dst_fname = dst_fname + POSITIVE_DIR
+    else:
+        dst_fname = dst_fname + NEGATIVE_DIR
+
 
     dst_fname = dst_fname + '/' + row.png_fname
 
