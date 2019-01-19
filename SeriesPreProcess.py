@@ -1,15 +1,15 @@
 import os
 import pydicom
 import numpy as np
-from skimage import exposure
 import uuid
 from scipy.misc import imsave
 from skimage.restoration import denoise_tv_chambolle
 from skimage import exposure
 
-SRC_DIR = 'C:/Users/hp/Downloads/tcga-lihc/TCGA-LIHC_CT_DCM/TCGA-BC-A3KF/02-18-2002-Outside Read or Comparison BODY CT-18240/2-ABDOMEN ST WO-99980'
-OUT_DIR = 'C:/temp/foo'
-CSV_FILENAME = 'c:/temp/foo/images-id-with-filters.csv'
+SRC_DIR = 'C:/Users/hp/Downloads/tcga-kirp/TCGA-KIRP_CT'
+OUT_DIR = 'C:/Users/hp/Downloads/tcga-kirp/tcga-kirp-png'
+CSV_FILENAME = 'images-id-with-filters.csv'
+CREATE_CSV_HEADER = False
 
 def create_image_id(file_path, file_name):
     slice_id = uuid.uuid4().hex
@@ -69,9 +69,26 @@ def do_tv_denoise(img):
 def dcm_dir_convert(inputdir):
     for f in os.listdir(inputdir):
         if not os.path.isdir(inputdir + f):
-           img_original = read_dcm(inputdir, f)
-           img_clahe = do_adaptative_histogram(img_original)
-           img_denoise = do_tv_denoise(img_clahe)
-           save_png(img_denoise, inputdir, f, False)
+            img_original = read_dcm(inputdir, f)
+            img_clahe = do_adaptative_histogram(img_original)
+            img_denoise = do_tv_denoise(img_clahe)
+            save_png(img_denoise, inputdir, f, False)
 
-dcm_dir_convert(SRC_DIR)
+
+# create CSV header
+if CREATE_CSV_HEADER:
+    with open(CSV_FILENAME, "a") as x:
+        x.write('base_path, patient, study, series, dcm_fname, slice_uid, png_fname, hcc_class, dataset, dclass \n')
+
+# search recursively for dcm directories
+pathlist=[]
+for dirpath, dirs, files in os.walk(SRC_DIR):
+        path = dirpath.split('/')
+
+        for f in files:
+                if os.path.splitext(f)[1] == ".dcm":
+                    pathlist.append(dirpath)
+                    break
+
+for path in pathlist:
+    dcm_dir_convert(path+'/')
