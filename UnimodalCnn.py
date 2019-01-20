@@ -8,7 +8,7 @@ from keras.layers import Activation, Dropout, Flatten, Dense
 from keras import backend as K
 
 from ExecutionAttributes import ExecutionAttribute
-from Summary import plot_train_stats, create_results_dir, get_base_name, write_summary_txt
+from Summary import plot_train_stats, create_results_dir, get_base_name, write_summary_txt, save_model, save_weights
 
 # Summary Information
 SUMMARY_PATH="/mnt/data/results"
@@ -26,15 +26,15 @@ CYCLES = 1
 attr = ExecutionAttribute()
 
 # dimensions of our images.
-attr.img_width, attr.img_height = 96, 96
+attr.img_width, attr.img_height = 64, 64
 
 # network parameters
-#attr.path='C:/Users/hp/Downloads/cars_train'
+attr.path='C:/Users/hp/Downloads/cars_train'
 # attr.path='/home/amenegotto/dataset/2d/sem_pre_proc/'
-attr.path='/mnt/data/image/2d/sem_pre_proc/'
+#attr.path='/mnt/data/image/2d/sem_pre_proc/'
 attr.summ_basename=get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 10
-attr.batch_size = 20
+attr.epochs = 2
+attr.batch_size = 8
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':
@@ -51,11 +51,11 @@ for i in range(0, CYCLES):
 #    attr.model.add(Activation('relu'))
 #    attr.model.add(MaxPooling2D(pool_size=(3, 3)))
 
-    attr.model.add(Conv2D(64, (3, 3), input_shape=input_s))
-    attr.model.add(Activation('relu'))
-    attr.model.add(Conv2D(64, (3, 3), input_shape=input_s))
-    attr.model.add(Activation('relu'))
-    attr.model.add(MaxPooling2D(pool_size=(3, 3)))
+#    attr.model.add(Conv2D(64, (3, 3), input_shape=input_s))
+#    attr.model.add(Activation('relu'))
+#    attr.model.add(Conv2D(64, (3, 3), input_shape=input_s))
+#    attr.model.add(Activation('relu'))
+#    attr.model.add(MaxPooling2D(pool_size=(3, 3)))
 
     attr.model.add(Conv2D(32, (3, 3), input_shape=input_s))
     attr.model.add(Activation('relu'))
@@ -105,13 +105,15 @@ for i in range(0, CYCLES):
     attr.test_generator = test_datagen.flow_from_directory(
         attr.test_data_dir,
         target_size=(attr.img_width, attr.img_height),
-        batch_size=attr.batch_size,
+        batch_size=1,
         class_mode='binary')
 
     # calculate steps based on number of images and batch size
     attr.calculate_steps()
 
     attr.increment_seq()
+
+    # training time
     history = attr.model.fit_generator(
         attr.train_generator,
         steps_per_epoch=attr.steps_train,
@@ -119,6 +121,16 @@ for i in range(0, CYCLES):
         validation_data=attr.validation_generator,
         validation_steps=attr.steps_valid)
 
+    # plot loss and accuracy
     plot_train_stats(history, attr.curr_basename + '-training_loss.png', attr.curr_basename + '-training_accuracy.png')
 
-    write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['positive', 'negative'])
+    # create confusion matrix and report with accuracy, precision, recall, f-score
+    write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'])
+
+
+# save model for later reuse
+save_model(attr)
+
+# save weights for later reuse
+save_weights(attr)
+

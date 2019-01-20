@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from datetime import datetime
 import numpy as np
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix, cohen_kappa_score
 from sklearn.metrics import precision_recall_fscore_support as score
 from ExecutionAttributes import ExecutionAttribute
 import os
@@ -78,6 +78,10 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
         target_names = labels
         print(classification_report(execattr.test_generator.classes, y_pred, target_names=target_names))
         print(classification_report(execattr.test_generator.classes, y_pred, target_names=target_names), file=f)
+
+        cohen_score = cohen_kappa_score(execattr.test_generator.classes, y_pred)
+        print("Kappa Score = " + str(cohen_score))
+        f.write("Kappa Score = " + str(cohen_score))
 
         f.close()
 
@@ -156,5 +160,17 @@ def create_results_dir(basepath, network_format, image_format):
 
     return basepath + '/' + network_format + '/' + image_format
 
+
 def get_base_name(basepath):
     return basepath + '/' + datetime.now().strftime("%Y%m%d-%H%M%S")
+
+
+def save_model(execattr: ExecutionAttribute):
+    model_json = execattr.model.to_json()
+    with open(execattr.summ_basename + "-model.json", "w") as json_file:
+        json_file.write(model_json)
+        json_file.close()
+
+
+def save_weights(execattr: ExecutionAttribute):
+    execattr.model.save_weights(execattr.summ_basename + "-weights.h5")
