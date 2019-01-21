@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix, cohen_kappa_score
 from sklearn.metrics import precision_recall_fscore_support as score
 from ExecutionAttributes import ExecutionAttribute
+from keras import backend as K
 import os
 
 
@@ -27,6 +28,7 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
         f.write('Test Steps: ' + str(execattr.steps_test) + '\n')
         f.write('Epochs: ' + str(execattr.epochs) + '\n')
         f.write('Batch Size: ' + str(execattr.batch_size) + '\n')
+        f.write('Learning Rate: ' + str(K.eval(execattr.model.optimizer.lr)) + '\n')
 
         filenames = execattr.test_generator.filenames
         nb_samples = len(filenames)
