@@ -6,7 +6,7 @@ from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense
 from keras import backend as K
-from keras.optimizers import RMSprop 
+from keras.optimizers import RMSprop, Adam 
 from keras.initializers import he_normal
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 
@@ -14,9 +14,9 @@ from ExecutionAttributes import ExecutionAttribute
 from Summary import plot_train_stats, create_results_dir, get_base_name, write_summary_txt, save_model, save_weights
 
 # Summary Information
-#SUMMARY_PATH="/mnt/data/results"
+SUMMARY_PATH="/mnt/data/results"
 #SUMMARY_PATH="c:/temp/results"
-SUMMARY_PATH="/tmp/results"
+#SUMMARY_PATH="/tmp/results"
 NETWORK_FORMAT="Unimodal"
 IMAGE_FORMAT="2D"
 SUMMARY_BASEPATH=create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
@@ -29,15 +29,15 @@ CYCLES = 1
 attr = ExecutionAttribute()
 
 # dimensions of our images.
-attr.img_width, attr.img_height = 128, 128
+attr.img_width, attr.img_height = 150, 150
 
 # network parameters
 #attr.path='C:/Users/hp/Downloads/cars_train'
-attr.path='/home/amenegotto/dataset/2d/sem_pre_proc_mini/'
-#attr.path='/mnt/data/image/2d/sem_pre_proc/'
+#attr.path='/home/amenegotto/dataset/2d/sem_pre_proc_mini/
+attr.path='/mnt/data/image/2d/sem_pre_proc/'
 attr.summ_basename=get_base_name(SUMMARY_BASEPATH)
 attr.epochs = 20
-attr.batch_size = 10
+attr.batch_size = 20
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':
@@ -48,38 +48,40 @@ else:
 for i in range(0, CYCLES):
     # define model
     attr.model = Sequential()
-#    attr.model.add(Conv2D(128, (3, 3), input_shape=input_s))
+    attr.model.add(Conv2D(128, (3, 3), input_shape=input_s, kernel_initializer='he_normal'))
+    attr.model.add(Activation('relu'))
+    attr.model.add(Conv2D(128, (3, 3), input_shape=input_s, kernel_initializer='he_normal'))
+    attr.model.add(Activation('relu'))
+    attr.model.add(MaxPooling2D(pool_size=(3, 3)))
+
+#    attr.model.add(Conv2D(64, (3, 3), input_shape=input_s, kernel_initializer='he_normal'))
 #    attr.model.add(Activation('relu'))
-#    attr.model.add(Conv2D(128, (3, 3), input_shape=input_s))
+#    attr.model.add(Conv2D(64, (3, 3), input_shape=input_s, kernel_initializer='he_normal'))
 #    attr.model.add(Activation('relu'))
 #    attr.model.add(MaxPooling2D(pool_size=(3, 3)))
 
-    attr.model.add(Conv2D(64, (4, 4), input_shape=input_s, kernel_initializer='he_normal'))
-    attr.model.add(Activation('relu'))
-    attr.model.add(Conv2D(64, (4, 4), input_shape=input_s, kernel_initializer='he_normal'))
-    attr.model.add(Activation('relu'))
-    attr.model.add(MaxPooling2D(pool_size=(4, 4)))
-
-    attr.model.add(Conv2D(48, (4, 4), input_shape=input_s, kernel_initializer='he_normal'))
-    attr.model.add(Activation('relu'))
-    attr.model.add(Conv2D(48, (4, 4), input_shape=input_s, kernel_initializer='he_normal'))
-    attr.model.add(Activation('relu'))
-    attr.model.add(MaxPooling2D(pool_size=(4, 4)))
+#    attr.model.add(Conv2D(128, (3, 3), input_shape=input_s, kernel_initializer='he_normal'))
+#    attr.model.add(Activation('relu'))
+#    attr.model.add(Conv2D(128, (3, 3), input_shape=input_s, kernel_initializer='he_normal'))
+#    attr.model.add(Activation('relu'))
+#    attr.model.add(MaxPooling2D(pool_size=(3, 3)))
+#    attr.model.add(Dropout(0.5))
 
     attr.model.add(Flatten())  # this converts our 3D feature maps to 1D feature vectors
-    attr.model.add(Dense(48, kernel_initializer='he_normal'))
+    attr.model.add(Dense(256, kernel_initializer='he_normal'))
     attr.model.add(Activation('relu'))
-    attr.model.add(Dropout(0.2))
+    attr.model.add(Dropout(0.5))
+    attr.model.add(Dense(256, kernel_initializer='he_normal'))
     attr.model.add(Dense(1))
     attr.model.add(Activation('sigmoid'))
 
     # compile model using accuracy as main metric, rmsprop (gradient descendent)
     attr.model.compile(loss='binary_crossentropy',
-                  optimizer=RMSprop(lr=0.001),
+                  optimizer=RMSprop(lr=0.0001),
                   metrics=['accuracy'])
 
-    callbacks = [EarlyStopping(monitor='val_loss', patience=2),
-                 ModelCheckpoint(attr.summ_basename + "-ckweights.h5", monitor='val_loss', save_best_only=True)]
+    callbacks = [EarlyStopping(monitor='val_loss', patience=2, mode='min'),
+                 ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='min', verbose=1, monitor='val_loss', save_best_only=True)]
 
     # this is the augmentation configuration we will use for training
     train_datagen = ImageDataGenerator(
@@ -100,18 +102,21 @@ for i in range(0, CYCLES):
         attr.train_data_dir,
         target_size=(attr.img_width, attr.img_height),
         batch_size=attr.batch_size,
+        shuffle=True,
         class_mode='binary')
 
     attr.validation_generator = test_datagen.flow_from_directory(
         attr.validation_data_dir,
         target_size=(attr.img_width, attr.img_height),
         batch_size=attr.batch_size,
+        shuffle=True,
         class_mode='binary')
 
     attr.test_generator = test_datagen.flow_from_directory(
         attr.test_data_dir,
         target_size=(attr.img_width, attr.img_height),
         batch_size=1,
+        shuffle=False,
         class_mode='binary')
 
     # calculate steps based on number of images and batch size
