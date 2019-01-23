@@ -19,11 +19,11 @@ top_layers_checkpoint_path = 'cp.top.best.hdf5'
 fine_tuned_checkpoint_path = 'cp.fine_tuned.best.hdf5'
 new_extended_inception_weights = 'final_weights.hdf5'
 
-train_data_dir = 'C:/Users/hp/Downloads/cars_train/train'
-validation_data_dir = 'C:/Users/hp/Downloads/cars_train/valid'
+train_data_dir = '/mnt/data/image/2d/sem_pre_proc/train'
+validation_data_dir = '/mnt/data/image/2d/sem_pre_proc/valid'
 
-nb_train_samples = 170
-nb_validation_samples = 39
+nb_train_samples = 32782
+nb_validation_samples = 9367
 
 top_epochs = 50
 fit_epochs = 50
