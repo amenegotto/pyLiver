@@ -9,7 +9,7 @@ from keras import backend as K
 from keras.optimizers import RMSprop, Adam 
 from keras.initializers import he_normal
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras import regularizers
+
 from ExecutionAttributes import ExecutionAttribute
 from Summary import plot_train_stats, create_results_dir, get_base_name, write_summary_txt, save_model, save_weights
 
@@ -48,35 +48,35 @@ else:
 for i in range(0, CYCLES):
     # define model
     attr.model = Sequential()
-    attr.model.add(Conv2D(128, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
+    attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal'))
     attr.model.add(Activation('relu'))
     attr.model.add(BatchNormalization())
-    attr.model.add(Conv2D(128, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
+    attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal'))
     attr.model.add(Activation('relu'))
     attr.model.add(MaxPooling2D(pool_size=(3, 3)))
     attr.model.add(Dropout(0.5))
 
-    attr.model.add(Conv2D(128, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
+    attr.model.add(Conv2D(64, (3, 3), input_shape=input_s, kernel_initializer='he_normal'))
     attr.model.add(Activation('relu'))
     attr.model.add(BatchNormalization())
-    attr.model.add(Conv2D(128, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
+    attr.model.add(Conv2D(64, (3, 3), input_shape=input_s, kernel_initializer='he_normal'))
     attr.model.add(Activation('relu'))
     attr.model.add(MaxPooling2D(pool_size=(3, 3)))
     attr.model.add(Dropout(0.5))
 
-#    attr.model.add(Conv2D(128, (3, 3), input_shape=input_s, kernel_initializer='he_normal'))
-#    attr.model.add(Activation('relu'))
-#    attr.model.add(Conv2D(128, (3, 3), input_shape=input_s, kernel_initializer='he_normal'))
-#    attr.model.add(Activation('relu'))
-#    attr.model.add(MaxPooling2D(pool_size=(3, 3)))
-#    attr.model.add(Dropout(0.5))
+    attr.model.add(Conv2D(128, (3, 3), input_shape=input_s, kernel_initializer='he_normal'))
+    attr.model.add(Activation('relu'))
+    attr.model.add(Conv2D(128, (3, 3), input_shape=input_s, kernel_initializer='he_normal'))
+    attr.model.add(Activation('relu'))
+    attr.model.add(MaxPooling2D(pool_size=(3, 3)))
+    attr.model.add(Dropout(0.5))
 
     attr.model.add(Flatten())  # this converts our 3D feature maps to 1D feature vectors
-    attr.model.add(Dense(256, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
+    attr.model.add(Dense(256, kernel_initializer='he_normal'))
     attr.model.add(BatchNormalization())
     attr.model.add(Activation('relu'))
     attr.model.add(Dropout(0.5))
-    attr.model.add(Dense(256, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
+    attr.model.add(Dense(256, kernel_initializer='he_normal'))
     attr.model.add(Dense(1))
     attr.model.add(Activation('sigmoid'))
 
@@ -85,7 +85,7 @@ for i in range(0, CYCLES):
                   optimizer=RMSprop(lr=0.0001),
                   metrics=['accuracy'])
 
-    callbacks = [EarlyStopping(monitor='val_acc', patience=3, mode='max', restore_best_weights=True),
+    callbacks = [EarlyStopping(monitor='val_acc', patience=5, mode='max'),
                  ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
 
     # this is the augmentation configuration we will use for training
