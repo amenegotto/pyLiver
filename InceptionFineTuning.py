@@ -19,11 +19,13 @@ top_layers_checkpoint_path = 'cp.top.best.hdf5'
 fine_tuned_checkpoint_path = 'cp.fine_tuned.best.hdf5'
 new_extended_inception_weights = 'final_weights.hdf5'
 
-train_data_dir = '/mnt/data/image/2d/sem_pre_proc/train'
-validation_data_dir = '/mnt/data/image/2d/sem_pre_proc/valid'
+#basepath='/mnt/data/image/2d/sem_pre_proc/'
+basepath='/home/amenegotto/dataset/2d/sem_pre_proc_mini/'
+train_data_dir = basepath + 'train'
+validation_data_dir = basepath + 'valid'
 
-nb_train_samples = 32782
-nb_validation_samples = 9367
+nb_train_samples = 1600
+nb_validation_samples = 400
 
 top_epochs = 50
 fit_epochs = 50
