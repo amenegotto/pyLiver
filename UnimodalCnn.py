@@ -37,7 +37,7 @@ attr.img_width, attr.img_height = 150, 150
 attr.path='/mnt/data/image/2d/sem_pre_proc/'
 attr.summ_basename=get_base_name(SUMMARY_BASEPATH)
 attr.epochs = 20
-attr.batch_size = 50
+attr.batch_size = 32
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':
@@ -56,13 +56,13 @@ for i in range(0, CYCLES):
     attr.model.add(MaxPooling2D(pool_size=(3, 3)))
     attr.model.add(Dropout(0.5))
 
-    attr.model.add(Conv2D(128, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
-    attr.model.add(Activation('relu'))
-    attr.model.add(BatchNormalization())
-    attr.model.add(Conv2D(128, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
-    attr.model.add(Activation('relu'))
-    attr.model.add(MaxPooling2D(pool_size=(3, 3)))
-    attr.model.add(Dropout(0.5))
+#    attr.model.add(Conv2D(128, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
+#    attr.model.add(Activation('relu'))
+#    attr.model.add(BatchNormalization())
+#    attr.model.add(Conv2D(128, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
+#    attr.model.add(Activation('relu'))
+#    attr.model.add(MaxPooling2D(pool_size=(3, 3)))
+#    attr.model.add(Dropout(0.5))
 
 #    attr.model.add(Conv2D(128, (3, 3), input_shape=input_s, kernel_initializer='he_normal'))
 #    attr.model.add(Activation('relu'))
@@ -85,8 +85,8 @@ for i in range(0, CYCLES):
                   optimizer=RMSprop(lr=0.0001),
                   metrics=['accuracy'])
 
-    callbacks = [EarlyStopping(monitor='val_acc', patience=3, mode='max', restore_best_weights=True),
-                 ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
+    callbacks = [EarlyStopping(monitor='val_loss', patience=3, mode='min', restore_best_weights=True),
+                 ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='min', verbose=1, monitor='val_loss', save_best_only=True)]
 
     # this is the augmentation configuration we will use for training
     train_datagen = ImageDataGenerator(
@@ -146,13 +146,14 @@ for i in range(0, CYCLES):
     # plot loss and accuracy
     plot_train_stats(history, attr.curr_basename + '-training_loss.png', attr.curr_basename + '-training_accuracy.png')
 
+    # make sure that the best weights are loaded (even if restore_best_weights is already true)
+    attr.model.load_weights(filepath = attr.summ_basename + "-ckweights.h5")
+
+    # save model with weights for later reuse
+    save_model(attr)
+
     # create confusion matrix and report with accuracy, precision, recall, f-score
     write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'])
 
 
-# save model for later reuse
-save_model(attr)
-
-# save weights for later reuse
-save_weights(attr)
 

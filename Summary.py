@@ -168,11 +168,4 @@ def get_base_name(basepath):
 
 
 def save_model(execattr: ExecutionAttribute):
-    model_json = execattr.model.to_json()
-    with open(execattr.summ_basename + "-model.json", "w") as json_file:
-        json_file.write(model_json)
-        json_file.close()
-
-
-def save_weights(execattr: ExecutionAttribute):
-    execattr.model.save_weights(execattr.summ_basename + "-weights.h5")
+    execattr.model.save(execattr.summ_basename + "-model.h5")
