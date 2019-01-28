@@ -27,8 +27,8 @@ validation_data_dir = basepath + 'valid'
 nb_train_samples = 1600
 nb_validation_samples = 400
 
-top_epochs = 50
-fit_epochs = 50
+top_epochs = 5
+fit_epochs = 5
 
 batch_size = 5
 
@@ -58,9 +58,9 @@ model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['ac
 # prepare data augmentation configuration
 train_datagen = ImageDataGenerator(
     rescale=1. / 255,
-    shear_range=0.2,
-    zoom_range=0.2,
-    horizontal_flip=True)
+    shear_range=0.1,
+    zoom_range=0.1,
+    horizontal_flip=False)
 
 test_datagen = ImageDataGenerator(rescale=1. / 255)
 
