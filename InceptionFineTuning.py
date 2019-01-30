@@ -24,13 +24,13 @@ basepath='/home/amenegotto/dataset/2d/sem_pre_proc_mini/'
 train_data_dir = basepath + 'train'
 validation_data_dir = basepath + 'valid'
 
-nb_train_samples = 1600
-nb_validation_samples = 400
+nb_train_samples = 800
+nb_validation_samples = 200
 
 top_epochs = 5
 fit_epochs = 5
 
-batch_size = 5
+batch_size = 4
 
 # add a global spatial average pooling layer
 x = base_model.output
@@ -41,7 +41,7 @@ x = Dense(1024, activation='relu')(x)
 predictions = Dense(2, activation='softmax')(x)
 
 # this is the model we will train
-model = Model(input=base_model.input, output=predictions)
+model = Model(inputs=base_model.input, outputs=predictions)
 
 if os.path.exists(top_layers_checkpoint_path):
 	model.load_weights(top_layers_checkpoint_path)
@@ -57,12 +57,14 @@ model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['ac
 
 # prepare data augmentation configuration
 train_datagen = ImageDataGenerator(
-    rescale=1. / 255,
-    shear_range=0.1,
-    zoom_range=0.1,
+#    rescale=1. / 255,
+#    shear_range=0.1,
+#    zoom_range=0.1,
     horizontal_flip=False)
 
-test_datagen = ImageDataGenerator(rescale=1. / 255)
+test_datagen = ImageDataGenerator(
+        #rescale=1. / 255
+        )
 
 train_generator = train_datagen.flow_from_directory(
     train_data_dir,
@@ -88,10 +90,10 @@ mc_top = ModelCheckpoint(top_layers_checkpoint_path, monitor='val_acc', verbose=
 
 model.fit_generator(
     train_generator,
-    samples_per_epoch=nb_train_samples // batch_size,
-    nb_epoch=top_epochs,
+    steps_per_epoch=train_generator.n // train_generator.batch_size,
+    epochs=top_epochs,
     validation_data=validation_generator,
-    nb_val_samples=nb_validation_samples // batch_size,
+    validation_steps=validation_generator.n // validation_generator.batch_size,
     callbacks=[mc_top])
 
 # at this point, the top layers are well trained and we can start fine-tuning
@@ -130,10 +132,10 @@ model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossent
 
 model.fit_generator(
     train_generator,
-    samples_per_epoch=nb_train_samples // batch_size,
-    nb_epoch=fit_epochs,
+    steps_per_epoch=train_generator.n // train_generator.batch_size,
+    epochs=fit_epochs,
     validation_data=validation_generator,
-    nb_val_samples=nb_validation_samples // batch_size,
+    validation_steps=validation_generator.n // validation_generator.batch_size,
     callbacks=[mc_fit, tb])
 
 model.save_weights(new_extended_inception_weights)

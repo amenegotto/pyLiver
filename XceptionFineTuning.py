@@ -18,11 +18,12 @@ nb_classes = 2  # number of classes
 based_model_last_block_layer_number = 126  # value is based on based model selected.
 img_width, img_height = 299, 299  # change based on the shape/structure of your images
 batch_size = 4  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
-nb_epoch = 30  # number of iteration the algorithm gets trained.
+epoch = 30  # number of iteration the algorithm gets trained.
 learn_rate = 1e-4  # sgd learning rate
 momentum = .9  # sgd momentum to avoid local minimum
 transformation_ratio = .05  # how aggressive will be the data augmentation/transformation
 
+#data_dir='/mnt/data/image/2d/sem_pre_proc/'
 data_dir = '/home/amenegotto/dataset/2d/sem_pre_proc_mini/'
 train_dir = data_dir + 'train'
 validation_dir = data_dir + 'valid'
@@ -51,13 +52,17 @@ for layer in base_model.layers:
 
 # Read Data and Augment it: Make sure to select augmentations that are appropriate to your images.
 # To save augmentations un-comment save lines and add to your flow parameters.
-train_datagen = ImageDataGenerator(rescale=1. / 255,
-                                   rotation_range=transformation_ratio,
-                                   shear_range=transformation_ratio,
-                                   zoom_range=transformation_ratio,
-                                   cval=transformation_ratio)
+train_datagen = ImageDataGenerator(
+                                   #rescale=1. / 255,
+                                   #rotation_range=transformation_ratio,
+                                   #shear_range=transformation_ratio,
+                                   #zoom_range=transformation_ratio,
+                                   #cval=transformation_ratio
+                                   )
 
-validation_datagen = ImageDataGenerator(rescale=1. / 255)
+validation_datagen = ImageDataGenerator(
+        #rescale=1. / 255
+        )
 
 train_generator = train_datagen.flow_from_directory(train_dir,
                                                     target_size=(img_width, img_height),
@@ -87,10 +92,10 @@ callbacks_list = [
 
 # Train Simple CNN
 model.fit_generator(train_generator,
-                    samples_per_epoch=train_generator.samples,
-                    nb_epoch=nb_epoch / 5,
+                    steps_per_epoch=train_generator.n // train_generator.batch_size,
+                    epochs=epoch / 5,
                     validation_data=validation_generator,
-                    nb_val_samples=validation_generator.samples,
+                    validation_steps=validation_generator.n // validation_generator.batch_size,
                     callbacks=callbacks_list)
 
 # verbose
@@ -126,11 +131,12 @@ callbacks_list = [
 
 # fine-tune the model
 model.fit_generator(train_generator,
-                    samples_per_epoch=train_generator.samples,
-                    nb_epoch=nb_epoch,
+                    steps_per_epoch=train_generator.n // train_generator.batch_size,
+                    epochs=epoch,
                     validation_data=validation_generator,
-                    nb_val_samples=validation_generator.samples,
+                    validation_steps=validation_generator.n // validation_generator.batch_size,
                     callbacks=callbacks_list)
+
 
 # save model
 model.save('xception-final.h5')

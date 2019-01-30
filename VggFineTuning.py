@@ -80,26 +80,26 @@ history = model.fit_generator(
 # Save the model
 model.save('small_last4.h5')
 
-acc = history.history['acc']
-val_acc = history.history['val_acc']
-loss = history.history['loss']
-val_loss = history.history['val_loss']
+#acc = history.history['acc']
+#val_acc = history.history['val_acc']
+#loss = history.history['loss']
+#val_loss = history.history['val_loss']
  
-epochs = range(len(acc))
+#epochs = range(len(acc))
  
-plt.plot(epochs, acc, 'b', label='Training acc')
-plt.plot(epochs, val_acc, 'r', label='Validation acc')
-plt.title('Training and validation accuracy')
-plt.legend()
+#plt.plot(epochs, acc, 'b', label='Training acc')
+#plt.plot(epochs, val_acc, 'r', label='Validation acc')
+#plt.title('Training and validation accuracy')
+#plt.legend()
  
-plt.figure()
+#plt.figure()
  
-plt.plot(epochs, loss, 'b', label='Training loss')
-plt.plot(epochs, val_loss, 'r', label='Validation loss')
-plt.title('Training and validation loss')
-plt.legend()
+#plt.plot(epochs, loss, 'b', label='Training loss')
+#plt.plot(epochs, val_loss, 'r', label='Validation loss')
+#plt.title('Training and validation loss')
+#plt.legend()
  
-plt.show()
+#plt.show()
 
 # Get the filenames from the generator
 fnames = validation_generator.filenames
@@ -121,18 +121,18 @@ errors = np.where(predicted_classes != ground_truth)[0]
 print("No of errors = {}/{}".format(len(errors),validation_generator.samples))
 
 # Show the errors
-for i in range(len(errors)):
-    pred_class = np.argmax(predictions[errors[i]])
-    pred_label = idx2label[pred_class]
+#for i in range(len(errors)):
+#    pred_class = np.argmax(predictions[errors[i]])
+#    pred_label = idx2label[pred_class]
 
-    title = 'Original label:{}, Prediction :{}, confidence : {:.3f}'.format(
-        fnames[errors[i]].split('/')[0],
-        pred_label,
-        predictions[errors[i]][pred_class])
+#    title = 'Original label:{}, Prediction :{}, confidence : {:.3f}'.format(
+#        fnames[errors[i]].split('/')[0],
+#        pred_label,
+#        predictions[errors[i]][pred_class])
 
-    original = load_img('{}/{}'.format(validation_dir,fnames[errors[i]]))
-    plt.figure(figsize=[7,7])
-    plt.axis('off')
-    plt.title(title)
-    plt.imshow(original)
-    plt.show()
+#    original = load_img('{}/{}'.format(validation_dir,fnames[errors[i]]))
+#    plt.figure(figsize=[7,7])
+#    plt.axis('off')
+#    plt.title(title)
+#    plt.imshow(original)
+#    plt.show()
