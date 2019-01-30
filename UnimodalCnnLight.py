@@ -33,17 +33,17 @@ attr.img_width, attr.img_height = 64, 64
 
 # network parameters
 #attr.path='C:/Users/hp/Downloads/cars_train'
-attr.path='/home/amenegotto/dataset/2d/sem_pre_proc_mini/'
-#attr.path='/mnt/data/image/2d/sem_pre_proc/'
+attr.path='/home/amenegotto/dataset/2d/com_pre_proc/'
+#attr.path='/mnt/data/image/2d/com_pre_proc'
 attr.summ_basename=get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 20
-attr.batch_size = 8
+attr.epochs = 60
+attr.batch_size = 4
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':
-    input_s = (3, attr.img_width, attr.img_height)
+    input_s = (1, attr.img_width, attr.img_height)
 else:
-    input_s = (attr.img_width, attr.img_height, 3)
+    input_s = (attr.img_width, attr.img_height, 1)
 
 for i in range(0, CYCLES):
     # define model
@@ -53,30 +53,23 @@ for i in range(0, CYCLES):
     attr.model.add(BatchNormalization())
     attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(Activation('relu'))
-    attr.model.add(MaxPooling2D(pool_size=(3, 3)))
+    attr.model.add(MaxPooling2D(pool_size=(3, 3), input_shape=input_s))
     attr.model.add(Dropout(0.5))
 
-    attr.model.add(Conv2D(64, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
+    attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(Activation('relu'))
     attr.model.add(BatchNormalization())
-    attr.model.add(Conv2D(64, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
+    attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(Activation('relu'))
-    attr.model.add(MaxPooling2D(pool_size=(3, 3)))
-    attr.model.add(Dropout(0.5))
-
-    attr.model.add(Conv2D(32, (2, 2), input_shape=input_s, kernel_initializer='he_normal'))
-    attr.model.add(Activation('relu'))
-    attr.model.add(Conv2D(32, (2, 2), input_shape=input_s, kernel_initializer='he_normal'))
-    attr.model.add(Activation('relu'))
-    attr.model.add(MaxPooling2D(pool_size=(3, 3)))
+    attr.model.add(MaxPooling2D(pool_size=(3, 3), input_shape=input_s))
     attr.model.add(Dropout(0.5))
 
     attr.model.add(Flatten())  # this converts our 3D feature maps to 1D feature vectors
-    attr.model.add(Dense(256, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
+    attr.model.add(Dense(512, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(BatchNormalization())
     attr.model.add(Activation('relu'))
     attr.model.add(Dropout(0.5))
-    attr.model.add(Dense(512, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
+    attr.model.add(Dense(1024, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(Dense(1))
     attr.model.add(Activation('sigmoid'))
 
@@ -85,31 +78,33 @@ for i in range(0, CYCLES):
                   optimizer=RMSprop(lr=0.0001),
                   metrics=['accuracy'])
 
-    callbacks = [EarlyStopping(monitor='val_loss', patience=5, mode='min', restore_best_weights=True),
+    callbacks = [EarlyStopping(monitor='val_loss', patience=10, mode='min', restore_best_weights=True),
                  ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='min', verbose=1, monitor='val_loss', save_best_only=True)]
 
     # this is the augmentation configuration we will use for training
     train_datagen = ImageDataGenerator(
-            rotation_range=2,
+        #    rotation_range=2,
          #   width_shift_range=0.2,
          #   height_shift_range=0.2,
-            rescale=1./255,
+        #    rescale=1./255,
          #   shear_range=0.2,
-            zoom_range=0.1,
+        #    zoom_range=0.1,
          #   horizontal_flip=True,
          #   fill_mode='nearest')
 		)
 
     # this is the augmentation configuration we will use for testing:
     # only rescaling
-    test_datagen = ImageDataGenerator(rescale=1. / 255)
+    test_datagen = ImageDataGenerator(
+            #rescale=1. / 255
+            )
 
     attr.train_generator = train_datagen.flow_from_directory(
         attr.train_data_dir,
         target_size=(attr.img_width, attr.img_height),
         batch_size=attr.batch_size,
         shuffle=True,
-#        color_mode='grayscale',
+        color_mode='grayscale',
         class_mode='binary')
 
     attr.validation_generator = test_datagen.flow_from_directory(
@@ -117,7 +112,7 @@ for i in range(0, CYCLES):
         target_size=(attr.img_width, attr.img_height),
         batch_size=attr.batch_size,
         shuffle=True,
- #       color_mode='grayscale',
+        color_mode='grayscale',
         class_mode='binary')
 
     attr.test_generator = test_datagen.flow_from_directory(
@@ -125,7 +120,7 @@ for i in range(0, CYCLES):
         target_size=(attr.img_width, attr.img_height),
         batch_size=1,
         shuffle=False,
-  #      color_mode='grayscale',
+        color_mode='grayscale',
         class_mode='binary')
 
     # calculate steps based on number of images and batch size
@@ -140,7 +135,7 @@ for i in range(0, CYCLES):
         epochs=attr.epochs,
         validation_data=attr.validation_generator,
         validation_steps=attr.steps_valid,
-        use_multiprocessing=True,
+        use_multiprocessing=False,
         callbacks=callbacks)
 
     # plot loss and accuracy
