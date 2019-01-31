@@ -1,6 +1,6 @@
 class ExecutionAttribute:
 
-    def __init__(self, summ_basename="", img_width=0, img_height=0, path="", epochs=0, batch_size=0, train_generator=None, valid_generator=None, test_generator=None, model=None, seq=0, architecture = ""):
+    def __init__(self, summ_basename="", img_width=0, img_height=0, path="", epochs=0, batch_size=0, train_generator=None, validation_generator=None, test_generator=None, model=None, seq=0, architecture = ""):
         self.img_width = img_width
         self.img_height = img_height
         self.path = path
@@ -8,7 +8,7 @@ class ExecutionAttribute:
         self.model = model
         self.batch_size = batch_size
         self.train_generator = train_generator
-        self.valid_generator = valid_generator
+        self.validation_generator = validation_generator
         self.test_generator = test_generator
         self.summ_basename = summ_basename
         self.train_data_dir = path + '/train'

@@ -106,6 +106,7 @@ attr.model.compile(optimizer='nadam',
 
 # calculate steps based on number of images and batch size
 attr.calculate_steps()
+attr.increment_seq()
 
 # Train Simple CNN
 attr.model.fit_generator(attr.train_generator,

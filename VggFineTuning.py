@@ -98,6 +98,7 @@ attr.model.compile(loss='categorical_crossentropy',
 
 # calculate steps based on number of images and batch size
 attr.calculate_steps()
+attr.increment_seq()
 
 # Train the model
 history = attr.model.fit_generator(
