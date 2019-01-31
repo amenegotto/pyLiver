@@ -12,6 +12,11 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
     with open(execattr.curr_basename + ".txt", "a") as f:
         f.write('EXECUTION SUMMARY\n')
         f.write('-----------------\n\n')
+        if execattr.architecture != "":
+            f.write('Architecture: ' + execattr.architecture + '\n')
+        else:
+            f.write('Architecture: From scratch\n')
+
         f.write('Execution Seq: ' + str(execattr.seq) + '\n')
         f.write('Network Type: ' + network_format + '\n')
         f.write('Image Format: ' + image_format + '\n')
@@ -40,7 +45,7 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
         f.write("\nNumber of Test Samples:\n")
         f.write(str(nb_samples) + "\n\n")
 
-        score_gen = execattr.model.evaluate_generator(generator=execattr.test_generator, steps=nb_samples)
+        score_gen = execattr.model.evaluate_generator(generator=execattr.test_generator, steps=execattr.steps_test,verbose=1)
 
         print(score)
         print('Test Loss:', score_gen[0])
@@ -50,40 +55,78 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
 
         # Confusion Matrix and Classification Report
         execattr.test_generator.reset()
-        Y_pred = execattr.model.predict_generator(execattr.test_generator, steps=execattr.steps_test, verbose=1)
-        y_pred = np.rint(Y_pred)
+        if execattr.architecture != "":
+            # todo: for softmax... confusion matrix
+            Y_pred = execattr.model.predict_generator(execattr.test_generator, steps=execattr.steps_test, verbose=1)
+            y_pred = np.argmax(Y_pred, axis=1)
 
-        print(Y_pred)
-        print(y_pred)
-        print(execattr.test_generator.classes)
+            print(Y_pred)
+            print(y_pred)
+            print(execattr.test_generator.classes)
 
-        f.write('Predicted Values: \n')
-        print(Y_pred, file=f)
-        f.write('\nRounded Values: \n')
-        print(y_pred, file=f)
-        f.write('\nClasses: \n')
-        print(execattr.test_generator.classes, file=f)
+            f.write('Predicted Values: \n')
+            print(Y_pred, file=f)
+            f.write('\nRounded Values: \n')
+            print(y_pred, file=f)
+            f.write('\nClasses: \n')
+            print(execattr.test_generator.classes, file=f)
 
-        mtx = confusion_matrix(execattr.test_generator.classes, y_pred, labels=[1, 0])
-        print('Confusion Matrix:')
-        print(mtx)
-        f.write('\n\nConfusion Matrix:\n')
-        f.write('TP   FP\n')
-        f.write('FN   TN\n')
-        print(mtx, file=f)
+            mtx = confusion_matrix(execattr.test_generator.classes, y_pred)
+            print('Confusion Matrix:')
+            print(mtx)
+            f.write('\n\nConfusion Matrix:\n')
+            f.write('TP   FP\n')
+            f.write('FN   TN\n')
+            print(mtx, file=f)
 
-        plt.imshow(mtx, cmap='binary', interpolation='None')
-        plt.savefig(execattr.curr_basename + '-confusion_matrix.png')
-        plt.clf()
+            plt.imshow(mtx, cmap='binary', interpolation='None')
+            plt.savefig(execattr.curr_basename + '-confusion_matrix.png')
+            plt.clf()
 
-        # print('Classification Report')
-        target_names = labels
-        print(classification_report(execattr.test_generator.classes, y_pred, target_names=target_names))
-        print(classification_report(execattr.test_generator.classes, y_pred, target_names=target_names), file=f)
+            # print('Classification Report')
+            target_names = list(execattr.test_generator.class_indices.keys())
+            print(classification_report(execattr.test_generator.classes, y_pred, target_names=target_names))
+            print(classification_report(execattr.test_generator.classes, y_pred, target_names=target_names), file=f)
 
-        cohen_score = cohen_kappa_score(execattr.test_generator.classes, y_pred)
-        print("Kappa Score = " + str(cohen_score))
-        f.write("Kappa Score = " + str(cohen_score))
+            cohen_score = cohen_kappa_score(execattr.test_generator.classes, y_pred)
+            print("Kappa Score = " + str(cohen_score))
+            f.write("Kappa Score = " + str(cohen_score))
+
+        else:    
+            Y_pred = execattr.model.predict_generator(execattr.test_generator, steps=execattr.steps_test, verbose=1)
+            y_pred = np.rint(Y_pred)
+
+            print(Y_pred)
+            print(y_pred)
+            print(execattr.test_generator.classes)
+
+            f.write('Predicted Values: \n')
+            print(Y_pred, file=f)
+            f.write('\nRounded Values: \n')
+            print(y_pred, file=f)
+            f.write('\nClasses: \n')
+            print(execattr.test_generator.classes, file=f)
+
+            mtx = confusion_matrix(execattr.test_generator.classes, y_pred, labels=[1, 0])
+            print('Confusion Matrix:')
+            print(mtx)
+            f.write('\n\nConfusion Matrix:\n')
+            f.write('TP   FP\n')
+            f.write('FN   TN\n')
+            print(mtx, file=f)
+
+            plt.imshow(mtx, cmap='binary', interpolation='None')
+            plt.savefig(execattr.curr_basename + '-confusion_matrix.png')
+            plt.clf()
+
+            # print('Classification Report')
+            target_names = labels
+            print(classification_report(execattr.test_generator.classes, y_pred, target_names=target_names))
+            print(classification_report(execattr.test_generator.classes, y_pred, target_names=target_names), file=f)
+
+            cohen_score = cohen_kappa_score(execattr.test_generator.classes, y_pred)
+            print("Kappa Score = " + str(cohen_score))
+            f.write("Kappa Score = " + str(cohen_score))
 
         f.close()
 

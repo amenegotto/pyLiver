@@ -1,6 +1,6 @@
 class ExecutionAttribute:
 
-    def __init__(self, summ_basename="", img_width=0, img_height=0, path="", epochs=0, batch_size=0, train_generator=None, valid_generator=None, test_generator=None, model=None, seq=0):
+    def __init__(self, summ_basename="", img_width=0, img_height=0, path="", epochs=0, batch_size=0, train_generator=None, valid_generator=None, test_generator=None, model=None, seq=0, architecture = ""):
         self.img_width = img_width
         self.img_height = img_height
         self.path = path
@@ -18,6 +18,7 @@ class ExecutionAttribute:
         self.steps_valid = 0
         self.steps_test = 0
         self.seq = seq
+        self.architecture = architecture
         self.curr_basename = self.summ_basename + '-' + str(self.seq)
 
     def calculate_steps(self):

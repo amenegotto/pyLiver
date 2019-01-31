@@ -1,20 +1,37 @@
+# PURPOSE:
+# VGG19 fine tuning
+
+import numpy as np
 from keras.applications import VGG19
 from keras import models
 from keras import layers
 from keras import optimizers
 from keras.preprocessing.image import ImageDataGenerator
- 
+from keras.callbacks import EarlyStopping, ModelCheckpoint
+from Summary import create_results_dir, get_base_name, plot_train_stats, write_summary_txt
+from ExecutionAttributes import ExecutionAttribute
 
-basepath='/home/amenegotto/dataset/2d/sem_pre_proc_mini/'
-train_data_dir = basepath + 'train'
-validation_data_dir = basepath + 'valid'
-batch_size = 8
+# fix seed for reproducible results (only works on CPU, not GPU)
+seed = 9
+np.random.seed(seed=seed)
+#tf.set_random_seed(seed=seed)
 
-img_width = 224
-img_height = 224
+# Execution Attributes
+attr = ExecutionAttribute()
+attr.architecture = 'vgg19'
+
+results_path = create_results_dir('/tmp', 'fine-tuning', attr.architecture)
+attr.summ_basename = get_base_name(results_path)
+attr.path='/home/amenegotto/Downloads/cars'
+attr.set_dir_names()
+attr.batch_size = 16
+attr.epochs = 1
+
+attr.img_width = 224
+attr.img_height = 224
 
 #Load the VGG model
-vgg_conv = VGG19(weights='imagenet', include_top=False, input_shape=(img_width, img_height, 3))
+vgg_conv = VGG19(weights='imagenet', include_top=False, input_shape=(attr.img_width, attr.img_height, 3))
 
 # Freeze the layers except the last 4 layers
 for layer in vgg_conv.layers[:-4]:
@@ -26,19 +43,19 @@ for layer in vgg_conv.layers:
 
 
 # Create the model
-model = models.Sequential()
+attr.model = models.Sequential()
  
 # Add the vgg convolutional base model
-model.add(vgg_conv)
+attr.model.add(vgg_conv)
  
 # Add new layers
-model.add(layers.Flatten())
-model.add(layers.Dense(1024, activation='relu'))
-model.add(layers.Dropout(0.5))
-model.add(layers.Dense(2, activation='softmax'))
+attr.model.add(layers.Flatten())
+attr.model.add(layers.Dense(1024, activation='relu'))
+attr.model.add(layers.Dropout(0.5))
+attr.model.add(layers.Dense(2, activation='softmax'))
  
 # Show a summary of the model. Check the number of trainable parameters
-model.summary()
+attr.model.summary()
 
 # prepare data augmentation configuration
 train_datagen = ImageDataGenerator(
@@ -49,90 +66,76 @@ train_datagen = ImageDataGenerator(
 
 test_datagen = ImageDataGenerator(rescale=1. / 255)
 
-train_generator = train_datagen.flow_from_directory(
-    train_data_dir,
-    target_size=(img_height, img_width),
-    batch_size=batch_size,
+attr.train_generator = train_datagen.flow_from_directory(
+    attr.train_data_dir,
+    target_size=(attr.img_height, attr.img_width),
+    batch_size=attr.batch_size,
     class_mode='categorical')
 
 # Create a generator for prediction
-validation_generator = test_datagen.flow_from_directory(
-        validation_data_dir,
-        target_size=(img_height, img_width),
-        batch_size=batch_size,
+attr.validation_generator = test_datagen.flow_from_directory(
+        attr.validation_data_dir,
+        target_size=(attr.img_height, attr.img_width),
+        batch_size=attr.batch_size,
         class_mode='categorical',
         shuffle=False)
 
+attr.test_generator = test_datagen.flow_from_directory(
+        attr.test_data_dir,
+        target_size=(attr.img_height, attr.img_width),
+        batch_size=1,
+        class_mode='categorical',
+        shuffle=False)
+
+callbacks = [EarlyStopping(monitor='val_loss', patience=3, mode='min', restore_best_weights=True),
+             ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='min', verbose=1, monitor='val_loss', save_best_only=True)]
+
+
 # Compile the model
-model.compile(loss='categorical_crossentropy',
+attr.model.compile(loss='categorical_crossentropy',
               optimizer=optimizers.RMSprop(lr=1e-4),
               metrics=['acc'])
 
+# calculate steps based on number of images and batch size
+attr.calculate_steps()
+
 # Train the model
-history = model.fit_generator(
-      train_generator,
-      steps_per_epoch=train_generator.samples/train_generator.batch_size ,
-      epochs=30,
-      validation_data=validation_generator,
-      validation_steps=validation_generator.samples/validation_generator.batch_size,
+history = attr.model.fit_generator(
+      attr.train_generator,
+      steps_per_epoch=attr.steps_train ,
+      epochs=attr.epochs,
+      validation_data=attr.validation_generator,
+      validation_steps=attr.steps_valid,
+      callbacks=callbacks,
       verbose=1)
 
 # Save the model
-model.save('small_last4.h5')
+attr.model.save(attr.summ_basename + '-weights.h5')
 
-#acc = history.history['acc']
-#val_acc = history.history['val_acc']
-#loss = history.history['loss']
-#val_loss = history.history['val_loss']
- 
-#epochs = range(len(acc))
- 
-#plt.plot(epochs, acc, 'b', label='Training acc')
-#plt.plot(epochs, val_acc, 'r', label='Validation acc')
-#plt.title('Training and validation accuracy')
-#plt.legend()
- 
-#plt.figure()
- 
-#plt.plot(epochs, loss, 'b', label='Training loss')
-#plt.plot(epochs, val_loss, 'r', label='Validation loss')
-#plt.title('Training and validation loss')
-#plt.legend()
- 
-#plt.show()
+# Plot train stats
+plot_train_stats(history, attr.summ_basename + '-training_loss.png', attr.summ_basename + '-training_accuracy.png')
 
 # Get the filenames from the generator
-fnames = validation_generator.filenames
+fnames = attr.test_generator.filenames
 
 # Get the ground truth from generator
-ground_truth = validation_generator.classes
+ground_truth = attr.test_generator.classes
 
 # Get the label to class mapping from the generator
-label2index = validation_generator.class_indices
+label2index = attr.test_generator.class_indices
 
 # Getting the mapping from class index to class label
 idx2label = dict((v,k) for k,v in label2index.items())
 
 # Get the predictions from the model using the generator
-predictions = model.predict_generator(validation_generator, steps=validation_generator.samples/validation_generator.batch_size,verbose=1)
+predictions = attr.model.predict_generator(attr.test_generator, steps=attr.steps_test,verbose=1)
 predicted_classes = np.argmax(predictions,axis=1)
 
 errors = np.where(predicted_classes != ground_truth)[0]
-print("No of errors = {}/{}".format(len(errors),validation_generator.samples))
+res="No of errors = {}/{}".format(len(errors),attr.test_generator.samples)
+with open(attr.summ_basename + "-predicts.txt", "a") as f:
+    f.write(res)
+    print(res)
+    f.close()
 
-# Show the errors
-#for i in range(len(errors)):
-#    pred_class = np.argmax(predictions[errors[i]])
-#    pred_label = idx2label[pred_class]
-
-#    title = 'Original label:{}, Prediction :{}, confidence : {:.3f}'.format(
-#        fnames[errors[i]].split('/')[0],
-#        pred_label,
-#        predictions[errors[i]][pred_class])
-
-#    original = load_img('{}/{}'.format(validation_dir,fnames[errors[i]]))
-#    plt.figure(figsize=[7,7])
-#    plt.axis('off')
-#    plt.title(title)
-#    plt.imshow(original)
-#    plt.show()
+write_summary_txt(attr, "Unimodal", "2D", ['negative', 'positive'])    
