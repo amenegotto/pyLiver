@@ -12,6 +12,14 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras import regularizers
 from ExecutionAttributes import ExecutionAttribute
 from Summary import plot_train_stats, create_results_dir, get_base_name, write_summary_txt, save_model
+import tensorflow as tf
+import numpy as np
+
+# fix seed for reproducible results (only works on CPU, not GPU)
+seed = 9
+np.random.seed(seed=seed)
+tf.set_random_seed(seed=seed)
+
 
 # Summary Information
 #SUMMARY_PATH="/mnt/data/results"
@@ -29,15 +37,15 @@ CYCLES = 1
 attr = ExecutionAttribute()
 
 # dimensions of our images.
-attr.img_width, attr.img_height = 64, 64
+attr.img_width, attr.img_height = 150, 150
 
 # network parameters
 #attr.path='C:/Users/hp/Downloads/cars_train'
-attr.path='/home/amenegotto/dataset/2d/com_pre_proc/'
-#attr.path='/mnt/data/image/2d/com_pre_proc'
+#attr.path='/home/amenegotto/dataset/2d/com_pre_proc/'
+attr.path='/mnt/data/image/2d/sem_pre_proc'
 attr.summ_basename=get_base_name(SUMMARY_BASEPATH)
 attr.epochs = 60
-attr.batch_size = 4
+attr.batch_size = 64
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':
@@ -78,7 +86,7 @@ for i in range(0, CYCLES):
                   optimizer=RMSprop(lr=0.0001),
                   metrics=['accuracy'])
 
-    callbacks = [EarlyStopping(monitor='val_loss', patience=10, mode='min', restore_best_weights=True),
+    callbacks = [EarlyStopping(monitor='val_loss', patience=5, mode='min', restore_best_weights=True),
                  ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='min', verbose=1, monitor='val_loss', save_best_only=True)]
 
     # this is the augmentation configuration we will use for training
