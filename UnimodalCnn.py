@@ -133,6 +133,9 @@ for i in range(0, CYCLES):
 
     attr.increment_seq()
 
+    # Persist execution attributes for session resume
+    save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.properties')
+
     # training time
     history = attr.model.fit_generator(
         attr.train_generator,

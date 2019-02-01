@@ -1,10 +1,8 @@
 # PURPOSE:
-# unimodal DCNN for hepatocarcinoma computer-aided diagnosis (DRAFT)
+# test a structure for resume training after session is lost 
 
 from keras.preprocessing.image import ImageDataGenerator
-from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D
-from keras.layers import Activation, Dropout, Flatten, Dense, BatchNormalization
+from keras.models import load_model
 from keras import backend as K
 from keras.optimizers import RMSprop, Adam 
 from keras.initializers import he_normal
@@ -12,9 +10,9 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras import regularizers
 from ExecutionAttributes import ExecutionAttribute
 from Summary import plot_train_stats, create_results_dir, get_base_name, write_summary_txt, save_model
+from TrainingResume import save_execution_attributes, read_attributes
 import tensorflow as tf
 import numpy as np
-from TrainingResume import save_execution_attributes
 
 # fix seed for reproducible results (only works on CPU, not GPU)
 seed = 9
@@ -35,19 +33,8 @@ CYCLES = 1
 
 #
 # Execution Attributes
-attr = ExecutionAttribute()
-
-# dimensions of our images.
-attr.img_width, attr.img_height = 150, 150
-
-# network parameters
-#attr.path='C:/Users/hp/Downloads/cars_train'
-#attr.path='/home/amenegotto/dataset/2d/com_pre_proc/'
-attr.path='/mnt/data/image/2d/sem_pre_proc'
-attr.summ_basename=get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 60
-attr.batch_size = 64
-attr.set_dir_names()
+INITIAL_EPOCH=1
+attr = read_attributes('/tmp/results/Unimodal/2D/20190201-141755-execution-attributes.properties') 
 
 if K.image_data_format() == 'channels_first':
     input_s = (1, attr.img_width, attr.img_height)
@@ -56,36 +43,7 @@ else:
 
 for i in range(0, CYCLES):
     # define model
-    attr.model = Sequential()
-    attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
-    attr.model.add(Activation('relu'))
-    attr.model.add(BatchNormalization())
-    attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
-    attr.model.add(Activation('relu'))
-    attr.model.add(MaxPooling2D(pool_size=(3, 3), input_shape=input_s))
-    attr.model.add(Dropout(0.5))
-
-    attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
-    attr.model.add(Activation('relu'))
-    attr.model.add(BatchNormalization())
-    attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
-    attr.model.add(Activation('relu'))
-    attr.model.add(MaxPooling2D(pool_size=(3, 3), input_shape=input_s))
-    attr.model.add(Dropout(0.5))
-
-    attr.model.add(Flatten())  # this converts our 3D feature maps to 1D feature vectors
-    attr.model.add(Dense(512, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
-    attr.model.add(BatchNormalization())
-    attr.model.add(Activation('relu'))
-    attr.model.add(Dropout(0.5))
-    attr.model.add(Dense(1024, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
-    attr.model.add(Dense(1))
-    attr.model.add(Activation('sigmoid'))
-
-    # compile model using accuracy as main metric, rmsprop (gradient descendent)
-    attr.model.compile(loss='binary_crossentropy',
-                  optimizer=RMSprop(lr=0.0001),
-                  metrics=['accuracy'])
+    attr.model = load_model(attr.summ_basename + '-ckweights.h5')
 
     callbacks = [EarlyStopping(monitor='val_loss', patience=5, mode='min', restore_best_weights=True),
                  ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='min', verbose=1, monitor='val_loss', save_best_only=True)]
@@ -132,11 +90,6 @@ for i in range(0, CYCLES):
         color_mode='grayscale',
         class_mode='binary')
 
-    # calculate steps based on number of images and batch size
-    attr.calculate_steps()
-
-    attr.increment_seq()
-
     # Persist execution attributes for session resume
     save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.properties')
 
@@ -148,7 +101,8 @@ for i in range(0, CYCLES):
         validation_data=attr.validation_generator,
         validation_steps=attr.steps_valid,
         use_multiprocessing=False,
-        callbacks=callbacks)
+        callbacks=callbacks,
+        initial_epoch=INITIAL_EPOCH)
 
     # plot loss and accuracy
     plot_train_stats(history, attr.curr_basename + '-training_loss.png', attr.curr_basename + '-training_accuracy.png')

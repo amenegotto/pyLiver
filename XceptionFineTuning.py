@@ -146,6 +146,9 @@ callbacks_list = [
     EarlyStopping(monitor='val_loss', patience=5, verbose=0)
 ]
 
+# Persist execution attributes for session resume
+save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.properties')
+
 # fine-tune the model
 history = attr.model.fit_generator(attr.train_generator,
                     steps_per_epoch=attr.steps_train,

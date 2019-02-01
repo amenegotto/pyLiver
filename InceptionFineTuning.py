@@ -99,6 +99,9 @@ attr.calculate_steps()
 
 attr.increment_seq()
 
+# Persist execution attributes for session resume
+save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.properties')
+
 attr.model.fit_generator(
     attr.train_generator,
     steps_per_epoch=attr.steps_train,
