@@ -23,7 +23,7 @@ IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 1
+CYCLES = 2
 
 #
 # Execution Attributes
@@ -37,7 +37,7 @@ attr.img_width, attr.img_height = 150, 150
 # attr.path='/home/amenegotto/dataset/2d/sem_pre_proc_mini/
 attr.path = '/mnt/data/image/2d/sem_pre_proc/'
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 20
+attr.epochs = 2
 attr.batch_size = 32
 attr.set_dir_names()
 
@@ -159,5 +159,5 @@ for i in range(0, CYCLES):
     # create confusion matrix and report with accuracy, precision, recall, f-score
     write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'])
 
-os.system("aws s3 sync " + SUMMARY_PATH + "s3://pyliver-logs/logs/")
+os.system("aws s3 sync " + SUMMARY_BASEPATH + " s3://pyliver-logs/logs/")
 # os.system("poweroff")
