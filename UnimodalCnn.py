@@ -6,22 +6,23 @@ from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense, BatchNormalization
 from keras import backend as K
-from keras.optimizers import RMSprop, Adam 
-from keras.initializers import he_normal
+from keras.optimizers import RMSprop
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras import regularizers
 from ExecutionAttributes import ExecutionAttribute
-from Summary import plot_train_stats, create_results_dir, get_base_name, write_summary_txt, save_model, save_weights
+from Summary import plot_train_stats, create_results_dir, get_base_name, write_summary_txt, save_model
+from TrainingResume import save_execution_attributes
+import os
 
 # Summary Information
-SUMMARY_PATH="/mnt/data/results"
-#SUMMARY_PATH="c:/temp/results"
-#SUMMARY_PATH="/tmp/results"
-NETWORK_FORMAT="Unimodal"
-IMAGE_FORMAT="2D"
-SUMMARY_BASEPATH=create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
+SUMMARY_PATH = "/mnt/data/results"
+# SUMMARY_PATH="c:/temp/results"
+# SUMMARY_PATH="/tmp/results"
+NETWORK_FORMAT = "Unimodal"
+IMAGE_FORMAT = "2D"
+SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
 
-# how many times to execute the training/validation/test
+# how many times to execute the training/validation/test cycle
 CYCLES = 1
 
 #
@@ -32,10 +33,10 @@ attr = ExecutionAttribute()
 attr.img_width, attr.img_height = 150, 150
 
 # network parameters
-#attr.path='C:/Users/hp/Downloads/cars_train'
-#attr.path='/home/amenegotto/dataset/2d/sem_pre_proc_mini/
-attr.path='/mnt/data/image/2d/sem_pre_proc/'
-attr.summ_basename=get_base_name(SUMMARY_BASEPATH)
+# attr.path='C:/Users/hp/Downloads/cars_train'
+# attr.path='/home/amenegotto/dataset/2d/sem_pre_proc_mini/
+attr.path = '/mnt/data/image/2d/sem_pre_proc/'
+attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
 attr.epochs = 20
 attr.batch_size = 32
 attr.set_dir_names()
@@ -85,17 +86,17 @@ for i in range(0, CYCLES):
                   optimizer=RMSprop(lr=0.0001),
                   metrics=['accuracy'])
 
-    callbacks = [EarlyStopping(monitor='val_loss', patience=3, mode='min', restore_best_weights=True),
+    callbacks = [EarlyStopping(monitor='val_loss', patience=4, mode='min', restore_best_weights=True),
                  ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='min', verbose=1, monitor='val_loss', save_best_only=True)]
 
     # this is the augmentation configuration we will use for training
     train_datagen = ImageDataGenerator(
-            rotation_range=2,
+         #   rotation_range=2,
          #   width_shift_range=0.2,
          #   height_shift_range=0.2,
             rescale=1./255,
          #   shear_range=0.2,
-            zoom_range=0.1,
+         #   zoom_range=0.1,
          #   horizontal_flip=True,
          #   fill_mode='nearest')
 		)
@@ -150,7 +151,7 @@ for i in range(0, CYCLES):
     plot_train_stats(history, attr.curr_basename + '-training_loss.png', attr.curr_basename + '-training_accuracy.png')
 
     # make sure that the best weights are loaded (even if restore_best_weights is already true)
-    attr.model.load_weights(filepath = attr.summ_basename + "-ckweights.h5")
+    attr.model.load_weights(filepath=attr.summ_basename + "-ckweights.h5")
 
     # save model with weights for later reuse
     save_model(attr)
@@ -158,5 +159,5 @@ for i in range(0, CYCLES):
     # create confusion matrix and report with accuracy, precision, recall, f-score
     write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'])
 
-
-
+os.system("aws s3 sync " + SUMMARY_PATH + "s3://pyliver-logs/logs/")
+# os.system("poweroff")
