@@ -1,7 +1,6 @@
 # PURPOSE:
-# XCeption fine tuning
+# Xception fine tuning for hepatocarcinoma diagnosis through CTs images
 
-import sys
 import os
 from keras.layers import *
 from keras.optimizers import *
@@ -9,22 +8,28 @@ from keras.applications import *
 from keras.models import Model
 from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import ModelCheckpoint, EarlyStopping
-from keras import backend as k
 from Summary import create_results_dir, get_base_name, plot_train_stats, write_summary_txt
 from ExecutionAttributes import ExecutionAttribute
+from TrainingResume import save_execution_attributes
 
 # fix seed for reproducible results (only works on CPU, not GPU)
 seed = 9
 np.random.seed(seed=seed)
 tf.set_random_seed(seed=seed)
 
+# Summary Information
+SUMMARY_PATH = "/mnt/data/results"
+NETWORK_FORMAT = "Unimodal"
+IMAGE_FORMAT = "2D"
+SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
+
 # Execution Attributes
 attr = ExecutionAttribute()
 attr.architecture = 'Xception'
 
-results_path = create_results_dir('/tmp', 'fine-tuning', attr.architecture)
+results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architecture)
 attr.summ_basename = get_base_name(results_path)
-attr.path='/home/amenegotto/Downloads/cars'
+attr.path = '/mnt/data/image/2d/sem_pre_proc'
 attr.set_dir_names()
 attr.batch_size = 4  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
 attr.epochs = 1
@@ -77,10 +82,11 @@ attr.train_generator = train_datagen.flow_from_directory(attr.train_data_dir,
                                                     target_size=(attr.img_width, attr.img_height),
                                                     batch_size=attr.batch_size,
                                                     class_mode='categorical')
+
+# save and look at how the data augmentations look like
 # save_to_dir=os.path.join(os.path.abspath(train_data_dir), '../preview')
 # save_prefix='aug',
 # save_format='jpeg')
-# use the above 3 commented lines if you want to save and look at how the data augmentations look like
 
 attr.validation_generator = test_datagen.flow_from_directory(attr.validation_data_dir,
                                                               target_size=(attr.img_width, attr.img_height),
@@ -99,10 +105,7 @@ callbacks = [
     EarlyStopping(monitor='val_acc', patience=5, verbose=0)
 ]
 
-
-attr.model.compile(optimizer='nadam',
-              loss='categorical_crossentropy',  # categorical_crossentropy if multi-class classifier
-              metrics=['accuracy'])
+attr.model.compile(optimizer='nadam', loss='categorical_crossentropy', metrics=['accuracy'])
 
 # calculate steps based on number of images and batch size
 attr.calculate_steps()
@@ -174,17 +177,20 @@ ground_truth = attr.test_generator.classes
 label2index = attr.test_generator.class_indices
 
 # Getting the mapping from class index to class label
-idx2label = dict((v,k) for k,v in label2index.items())
+idx2label = dict((v, k) for k, v in label2index.items())
 
 # Get the predictions from the model using the generator
-predictions = attr.model.predict_generator(attr.test_generator, steps=attr.steps_test,verbose=1)
-predicted_classes = np.argmax(predictions,axis=1)
+predictions = attr.model.predict_generator(attr.test_generator, steps=attr.steps_test, verbose=1)
+predicted_classes = np.argmax(predictions, axis=1)
 
 errors = np.where(predicted_classes != ground_truth)[0]
-res="No of errors = {}/{}".format(len(errors),attr.test_generator.samples)
+res = "No of errors = {}/{}".format(len(errors), attr.test_generator.samples)
 with open(attr.summ_basename + "-predicts.txt", "a") as f:
     f.write(res)
     print(res)
     f.close()
 
-write_summary_txt(attr, "Unimodal", "2D", ['negative', 'positive'])    
+write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'])
+
+os.system("aws s3 sync " + SUMMARY_BASEPATH + " s3://pyliver-logs/logs/")
+# os.system("poweroff")

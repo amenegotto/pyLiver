@@ -1,6 +1,7 @@
 # PURPOSE:
-# VGG19 fine tuning
+# VGG19 fine tuning for hepatocarcinoma diagnosis through CTs images
 
+import os
 import numpy as np
 from keras.applications import VGG19
 from keras import models
@@ -10,19 +11,26 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from Summary import create_results_dir, get_base_name, plot_train_stats, write_summary_txt
 from ExecutionAttributes import ExecutionAttribute
+from TrainingResume import save_execution_attributes
 
 # fix seed for reproducible results (only works on CPU, not GPU)
 seed = 9
 np.random.seed(seed=seed)
-#tf.set_random_seed(seed=seed)
+# tf.set_random_seed(seed=seed)
+
+# Summary Information
+SUMMARY_PATH = "/mnt/data/results"
+NETWORK_FORMAT = "Unimodal"
+IMAGE_FORMAT = "2D"
+SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
 
 # Execution Attributes
 attr = ExecutionAttribute()
 attr.architecture = 'vgg19'
 
-results_path = create_results_dir('/tmp', 'fine-tuning', attr.architecture)
+results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architecture)
 attr.summ_basename = get_base_name(results_path)
-attr.path='/home/amenegotto/Downloads/cars'
+attr.path = '/mnt/data/image/2d/sem_pre_proc'
 attr.set_dir_names()
 attr.batch_size = 16
 attr.epochs = 1
@@ -60,8 +68,8 @@ attr.model.summary()
 # prepare data augmentation configuration
 train_datagen = ImageDataGenerator(
     rescale=1. / 255,
-    shear_range=0.1,
-    zoom_range=0.1,
+    # shear_range=0.1,
+    # zoom_range=0.1,
     horizontal_flip=False)
 
 test_datagen = ImageDataGenerator(rescale=1. / 255)
@@ -92,9 +100,7 @@ callbacks = [EarlyStopping(monitor='val_loss', patience=3, mode='min', restore_b
 
 
 # Compile the model
-attr.model.compile(loss='categorical_crossentropy',
-              optimizer=optimizers.RMSprop(lr=1e-4),
-              metrics=['acc'])
+attr.model.compile(loss='categorical_crossentropy', optimizer=optimizers.RMSprop(lr=1e-4), metrics=['acc'])
 
 # calculate steps based on number of images and batch size
 attr.calculate_steps()
@@ -106,7 +112,7 @@ save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.prop
 # Train the model
 history = attr.model.fit_generator(
       attr.train_generator,
-      steps_per_epoch=attr.steps_train ,
+      steps_per_epoch=attr.steps_train,
       epochs=attr.epochs,
       validation_data=attr.validation_generator,
       validation_steps=attr.steps_valid,
@@ -129,17 +135,19 @@ ground_truth = attr.test_generator.classes
 label2index = attr.test_generator.class_indices
 
 # Getting the mapping from class index to class label
-idx2label = dict((v,k) for k,v in label2index.items())
+idx2label = dict((v, k) for k, v in label2index.items())
 
 # Get the predictions from the model using the generator
-predictions = attr.model.predict_generator(attr.test_generator, steps=attr.steps_test,verbose=1)
-predicted_classes = np.argmax(predictions,axis=1)
+predictions = attr.model.predict_generator(attr.test_generator, steps=attr.steps_test, verbose=1)
+predicted_classes = np.argmax(predictions, axis=1)
 
 errors = np.where(predicted_classes != ground_truth)[0]
-res="No of errors = {}/{}".format(len(errors),attr.test_generator.samples)
+res = "No of errors = {}/{}".format(len(errors), attr.test_generator.samples)
 with open(attr.summ_basename + "-predicts.txt", "a") as f:
     f.write(res)
     print(res)
     f.close()
 
-write_summary_txt(attr, "Unimodal", "2D", ['negative', 'positive'])    
+write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'])
+
+os.system("aws s3 sync " + SUMMARY_BASEPATH + " s3://pyliver-logs/logs/")

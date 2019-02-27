@@ -1,27 +1,36 @@
+# PURPOSE:
+# InceptionV3 fine tuning for hepatocarcinoma diagnosis through CTs images
+
+import os
 from keras.applications.inception_v3 import InceptionV3
-from keras.preprocessing import image
 from keras.models import Model
 from keras.layers import Dense, GlobalAveragePooling2D
 from keras.preprocessing.image import ImageDataGenerator
-from keras import backend as K
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.optimizers import SGD
 import numpy as np
 from Summary import create_results_dir, get_base_name, plot_train_stats, write_summary_txt
 from ExecutionAttributes import ExecutionAttribute
+from TrainingResume import save_execution_attributes
 
 # fix seed for reproducible results (only works on CPU, not GPU)
 seed = 9
 np.random.seed(seed=seed)
-#tf.set_random_seed(seed=seed)
+# tf.set_random_seed(seed=seed)
+
+# Summary Information
+SUMMARY_PATH = "/mnt/data/results"
+NETWORK_FORMAT = "Unimodal"
+IMAGE_FORMAT = "2D"
+SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
 
 # Execution Attributes
 attr = ExecutionAttribute()
-attr.architecture = 'Inception'
+attr.architecture = 'InceptionV3'
 
-results_path = create_results_dir('/tmp', 'fine-tuning', attr.architecture)
+results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architecture)
 attr.summ_basename = get_base_name(results_path)
-attr.path='/home/amenegotto/Downloads/cars'
+attr.path = '/mnt/data/image/2d/sem_pre_proc'
 attr.set_dir_names()
 attr.batch_size = 4  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
 attr.epochs = 1
@@ -30,12 +39,8 @@ attr.epochs = 1
 base_model = InceptionV3(weights='imagenet', include_top=False)
 
 # dimensions of our images.
-#Inception input size
+# Inception input size
 attr.img_width, attr.img_height = 299, 299
-
-top_layers_checkpoint_path = 'cp.top.best.hdf5'
-fine_tuned_checkpoint_path = 'cp.fine_tuned.best.hdf5'
-new_extended_inception_weights = 'final_weights.hdf5'
 
 # add a global spatial average pooling layer
 x = base_model.output
@@ -47,10 +52,6 @@ predictions = Dense(2, activation='softmax')(x)
 
 # this is the model we will train
 attr.model = Model(inputs=base_model.input, outputs=predictions)
-
-#if os.path.exists(top_layers_checkpoint_path):
-#	model.load_weights(top_layers_checkpoint_path)
-#	print ("Checkpoint '" + top_layers_checkpoint_path + "' loaded.")
 
 # first: train only the top layers (which were randomly initialized)
 # i.e. freeze all convolutional InceptionV3 layers
@@ -117,7 +118,7 @@ attr.model.fit_generator(
 # let's visualize layer names and layer indices to see how many layers
 # we should freeze:
 for i, layer in enumerate(base_model.layers):
-   print(i, layer.name)
+    print(i, layer.name)
 
 attr.model.load_weights(attr.summ_basename + "-mid-ckweights.h5")
 
@@ -127,16 +128,12 @@ callbacks_list = [
     EarlyStopping(monitor='val_loss', patience=5, verbose=0)
 ]
 
-#if os.path.exists(fine_tuned_checkpoint_path):
-#	model.load_weights(fine_tuned_checkpoint_path)
-#	print ("Checkpoint '" + fine_tuned_checkpoint_path + "' loaded.")
-
-# we chose to train the top 2 inception blocks, i.e. we will freeze
+# train the top 2 inception blocks, i.e. we will freeze
 # the first 172 layers and unfreeze the rest:
 for layer in attr.model.layers[:172]:
-   layer.trainable = False
+    layer.trainable = False
 for layer in attr.model.layers[172:]:
-   layer.trainable = True
+    layer.trainable = True
 
 # we need to recompile the model for these modifications to take effect
 # we use SGD with a low learning rate
@@ -166,17 +163,19 @@ ground_truth = attr.test_generator.classes
 label2index = attr.test_generator.class_indices
 
 # Getting the mapping from class index to class label
-idx2label = dict((v,k) for k,v in label2index.items())
+idx2label = dict((v, k) for k, v in label2index.items())
 
 # Get the predictions from the model using the generator
-predictions = attr.model.predict_generator(attr.test_generator, steps=attr.steps_test,verbose=1)
-predicted_classes = np.argmax(predictions,axis=1)
+predictions = attr.model.predict_generator(attr.test_generator, steps=attr.steps_test, verbose=1)
+predicted_classes = np.argmax(predictions, axis=1)
 
 errors = np.where(predicted_classes != ground_truth)[0]
-res="No of errors = {}/{}".format(len(errors),attr.test_generator.samples)
+res = "No of errors = {}/{}".format(len(errors), attr.test_generator.samples)
 with open(attr.summ_basename + "-predicts.txt", "a") as f:
     f.write(res)
     print(res)
     f.close()
 
-write_summary_txt(attr, "Unimodal", "2D", ['negative', 'positive'])    
+write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'])
+
+os.system("aws s3 sync " + SUMMARY_BASEPATH + " s3://pyliver-logs/logs/")
