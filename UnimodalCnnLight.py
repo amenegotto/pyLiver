@@ -164,7 +164,7 @@ for i in range(0, CYCLES):
     # create confusion matrix and report with accuracy, precision, recall, f-score
     write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'])
 
-    K.backend.clear_session()
+    K.clear_session()
 
 os.system("aws s3 sync " + SUMMARY_BASEPATH + " s3://pyliver-logs/logs/")
 # os.system("poweroff")
