@@ -31,7 +31,7 @@ IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 1
+CYCLES = 20
 
 # Execution Attributes
 attr = ExecutionAttribute()
@@ -44,8 +44,8 @@ attr.img_width, attr.img_height = 150, 150
 # attr.path='/home/amenegotto/dataset/2d/com_pre_proc/'
 attr.path = '/mnt/data/image/2d/sem_pre_proc'
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 1
-attr.batch_size = 4
+attr.epochs = 64
+attr.batch_size = 64
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':
@@ -58,7 +58,8 @@ for i in range(0, CYCLES):
     attr.model = Sequential()
     attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(Activation('relu'))
-    attr.model.add(BatchNormalization())
+    attr.model.add(Dropout(0.5))
+    #attr.model.add(BatchNormalization())
     attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(Activation('relu'))
     attr.model.add(MaxPooling2D(pool_size=(3, 3), input_shape=input_s))
@@ -66,7 +67,8 @@ for i in range(0, CYCLES):
 
     attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(Activation('relu'))
-    attr.model.add(BatchNormalization())
+    #attr.model.add(BatchNormalization())
+    attr.model.add(Dropout(0.5))
     attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(Activation('relu'))
     attr.model.add(MaxPooling2D(pool_size=(3, 3), input_shape=input_s))
@@ -74,7 +76,7 @@ for i in range(0, CYCLES):
 
     attr.model.add(Flatten())  # this converts our 3D feature maps to 1D feature vectors
     attr.model.add(Dense(512, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
-    attr.model.add(BatchNormalization())
+    #attr.model.add(BatchNormalization())
     attr.model.add(Activation('relu'))
     attr.model.add(Dropout(0.5))
     attr.model.add(Dense(1024, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
@@ -157,6 +159,9 @@ for i in range(0, CYCLES):
 
     # save model with weights for later reuse
     save_model(attr)
+
+    # delete ckweights to save space - model file already has the best weights
+    os.remove(attr.summ_basename + "-ckweights.h5")
 
     # create confusion matrix and report with accuracy, precision, recall, f-score
     write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'])
