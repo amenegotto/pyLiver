@@ -93,7 +93,7 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
 
             auc_score = roc_auc_score(execattr.test_generator.classes, y_pred)
             print("ROC AUC Score = " + str(auc_score))
-            f.write("ROC AUC Score = " + str(auc_score))
+            f.write("\n\nROC AUC Score = " + str(auc_score))
 
             # plot the roc curve for the model
             fpr, tpr, thresholds = roc_curve(execattr.test_generator.classes, y_pred)
@@ -141,7 +141,7 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
 
             auc_score = roc_auc_score(execattr.test_generator.classes, y_pred)
             print("ROC AUC Score = " + str(auc_score))
-            f.write("ROC AUC Score = " + str(auc_score))
+            f.write("\n\nROC AUC Score = " + str(auc_score))
 
             # plot the roc curve for the model
             fpr, tpr, thresholds = roc_curve(execattr.test_generator.classes, y_pred)
@@ -183,6 +183,7 @@ def plot_train_stats(history, filename_loss, filename_accuracy):
     plt.ylabel('Loss')
     plt.legend()
     plt.savefig(filename_loss)
+    plt.clf()
 
     ## Accuracy
     plt.figure(2)

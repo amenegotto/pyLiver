@@ -58,8 +58,7 @@ for i in range(0, CYCLES):
     attr.model = Sequential()
     attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(Activation('relu'))
-    attr.model.add(Dropout(0.5))
-    #attr.model.add(BatchNormalization())
+    attr.model.add(BatchNormalization())
     attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(Activation('relu'))
     attr.model.add(MaxPooling2D(pool_size=(3, 3), input_shape=input_s))
@@ -67,8 +66,7 @@ for i in range(0, CYCLES):
 
     attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(Activation('relu'))
-    #attr.model.add(BatchNormalization())
-    attr.model.add(Dropout(0.5))
+    attr.model.add(BatchNormalization())
     attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(Activation('relu'))
     attr.model.add(MaxPooling2D(pool_size=(3, 3), input_shape=input_s))
@@ -76,7 +74,7 @@ for i in range(0, CYCLES):
 
     attr.model.add(Flatten())  # this converts our 3D feature maps to 1D feature vectors
     attr.model.add(Dense(512, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
-    #attr.model.add(BatchNormalization())
+    attr.model.add(BatchNormalization())
     attr.model.add(Activation('relu'))
     attr.model.add(Dropout(0.5))
     attr.model.add(Dense(1024, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
@@ -85,11 +83,11 @@ for i in range(0, CYCLES):
 
     # compile model using accuracy as main metric, rmsprop (gradient descendent)
     attr.model.compile(loss='binary_crossentropy',
-                  optimizer=RMSprop(lr=0.0001),
+                  optimizer=RMSprop(lr=0.00001),
                   metrics=['accuracy'])
 
     callbacks = [EarlyStopping(monitor='val_loss', patience=4, mode='min', restore_best_weights=True),
-                 ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='min', verbose=1, monitor='val_loss', save_best_only=True)]
+                 ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
 
     # this is the augmentation configuration we will use for training
     train_datagen = ImageDataGenerator(
@@ -165,6 +163,8 @@ for i in range(0, CYCLES):
 
     # create confusion matrix and report with accuracy, precision, recall, f-score
     write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'])
+
+    K.backend.clear_session()
 
 os.system("aws s3 sync " + SUMMARY_BASEPATH + " s3://pyliver-logs/logs/")
 # os.system("poweroff")
