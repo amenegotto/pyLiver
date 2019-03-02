@@ -31,7 +31,7 @@ IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 2
+CYCLES = 1
 
 # Execution Attributes
 attr = ExecutionAttribute()
@@ -45,7 +45,7 @@ attr.img_width, attr.img_height = 150, 150
 attr.path = '/mnt/data/image/2d/sem_pre_proc'
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
 attr.epochs = 1
-attr.batch_size = 64
+attr.batch_size = 4
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':

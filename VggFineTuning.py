@@ -32,7 +32,7 @@ results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architec
 attr.summ_basename = get_base_name(results_path)
 attr.path = '/mnt/data/image/2d/sem_pre_proc'
 attr.set_dir_names()
-attr.batch_size = 16
+attr.batch_size = 4
 attr.epochs = 1
 
 attr.img_width = 224
