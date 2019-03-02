@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from datetime import datetime
 import numpy as np
-from sklearn.metrics import classification_report, confusion_matrix, cohen_kappa_score
+from sklearn.metrics import classification_report, confusion_matrix, cohen_kappa_score, roc_auc_score, roc_curve
 from sklearn.metrics import precision_recall_fscore_support as score
 from ExecutionAttributes import ExecutionAttribute
 from keras import backend as K
@@ -56,7 +56,6 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
         # Confusion Matrix and Classification Report
         execattr.test_generator.reset()
         if execattr.architecture != "":
-            # todo: for softmax... confusion matrix
             Y_pred = execattr.model.predict_generator(execattr.test_generator, steps=execattr.steps_test, verbose=1)
             y_pred = np.argmax(Y_pred, axis=1)
 
@@ -91,6 +90,18 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
             cohen_score = cohen_kappa_score(execattr.test_generator.classes, y_pred)
             print("Kappa Score = " + str(cohen_score))
             f.write("Kappa Score = " + str(cohen_score))
+
+            auc_score = roc_auc_score(execattr.test_generator.classes, y_pred)
+            print("ROC AUC Score = " + str(auc_score))
+            f.write("ROC AUC Score = " + str(auc_score))
+
+            # plot the roc curve for the model
+            fpr, tpr, thresholds = roc_curve(execattr.test_generator.classes, y_pred)
+            plt.plot([0, 1], [0, 1], linestyle='--')
+            plt.plot(fpr, tpr, marker='.')
+            plt.savefig(execattr.curr_basename + '-roc-curve.png')
+            plt.clf()
+
 
         else:    
             Y_pred = execattr.model.predict_generator(execattr.test_generator, steps=execattr.steps_test, verbose=1)
@@ -127,6 +138,17 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
             cohen_score = cohen_kappa_score(execattr.test_generator.classes, y_pred)
             print("Kappa Score = " + str(cohen_score))
             f.write("Kappa Score = " + str(cohen_score))
+
+            auc_score = roc_auc_score(execattr.test_generator.classes, y_pred)
+            print("ROC AUC Score = " + str(auc_score))
+            f.write("ROC AUC Score = " + str(auc_score))
+
+            # plot the roc curve for the model
+            fpr, tpr, thresholds = roc_curve(execattr.test_generator.classes, y_pred)
+            plt.plot([0, 1], [0, 1], linestyle='--')
+            plt.plot(fpr, tpr, marker='.')
+            plt.savefig(execattr.curr_basename + '-roc-curve.png')
+            plt.clf()
 
         f.close()
 
