@@ -32,8 +32,8 @@ results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architec
 attr.summ_basename = get_base_name(results_path)
 attr.path = '/mnt/data/image/2d/sem_pre_proc'
 attr.set_dir_names()
-attr.batch_size = 4  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
-attr.epochs = 1
+attr.batch_size = 64  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
+attr.epochs = 32
 
 # create the base pre-trained model
 base_model = InceptionV3(weights='imagenet', include_top=False)
@@ -92,7 +92,7 @@ attr.test_generator = test_datagen.flow_from_directory(
 
 callbacks_top = [
     ModelCheckpoint(attr.summ_basename + "-mid-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-    EarlyStopping(monitor='val_acc', patience=5, verbose=0)
+    EarlyStopping(monitor='val_loss', patience=5, verbose=0)
 ]
 
 # calculate steps based on number of images and batch size

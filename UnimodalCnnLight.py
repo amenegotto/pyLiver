@@ -86,7 +86,7 @@ for i in range(0, CYCLES):
                   optimizer=RMSprop(lr=0.00001),
                   metrics=['accuracy'])
 
-    callbacks = [EarlyStopping(monitor='val_loss', patience=4, mode='min', restore_best_weights=True),
+    callbacks = [EarlyStopping(monitor='val_loss', patience=20, mode='min', restore_best_weights=True),
                  ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
 
     # this is the augmentation configuration we will use for training

@@ -32,8 +32,8 @@ results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architec
 attr.summ_basename = get_base_name(results_path)
 attr.path = '/mnt/data/image/2d/sem_pre_proc'
 attr.set_dir_names()
-attr.batch_size = 4
-attr.epochs = 1
+attr.batch_size = 64
+attr.epochs = 32
 
 attr.img_width = 224
 attr.img_height = 224
@@ -95,8 +95,8 @@ attr.test_generator = test_datagen.flow_from_directory(
         class_mode='categorical',
         shuffle=False)
 
-callbacks = [EarlyStopping(monitor='val_loss', patience=3, mode='min', restore_best_weights=True),
-             ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='min', verbose=1, monitor='val_loss', save_best_only=True)]
+callbacks = [EarlyStopping(monitor='val_loss', patience=5, mode='min', restore_best_weights=True),
+             ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
 
 
 # Compile the model
