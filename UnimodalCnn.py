@@ -30,7 +30,7 @@ IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 20
+CYCLES = 1
 
 #
 # Execution Attributes
@@ -42,9 +42,9 @@ attr.img_width, attr.img_height = 150, 150
 # network parameters
 # attr.path='C:/Users/hp/Downloads/cars_train'
 # attr.path='/home/amenegotto/dataset/2d/sem_pre_proc_mini/
-attr.path = '/mnt/data/image/2d/sem_pre_proc/'
+attr.path = '/mnt/data/image/2d/com_pre_proc/'
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 64
+attr.epochs = 200
 attr.batch_size = 64
 attr.set_dir_names()
 
@@ -93,7 +93,7 @@ for i in range(0, CYCLES):
                   optimizer=RMSprop(lr=0.00001),
                   metrics=['accuracy'])
 
-    callbacks = [EarlyStopping(monitor='val_loss', patience=4, mode='min', restore_best_weights=True),
+    callbacks = [EarlyStopping(monitor='val_loss', patience=10, mode='min', restore_best_weights=True),
                  ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
 
     # this is the augmentation configuration we will use for training

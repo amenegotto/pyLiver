@@ -29,7 +29,7 @@ attr.architecture = 'Xception'
 
 results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architecture)
 attr.summ_basename = get_base_name(results_path)
-attr.path = '/mnt/data/image/2d/sem_pre_proc'
+attr.path = '/mnt/data/image/2d/com_pre_proc'
 attr.set_dir_names()
 attr.batch_size = 64  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
 attr.epochs = 32
@@ -102,7 +102,7 @@ attr.test_generator = test_datagen.flow_from_directory(
 
 callbacks = [
     ModelCheckpoint(attr.summ_basename + "-mid-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-    EarlyStopping(monitor='val_loss', patience=5, verbose=0)
+    EarlyStopping(monitor='val_loss', patience=10, verbose=0)
 ]
 
 attr.model.compile(optimizer='nadam', loss='categorical_crossentropy', metrics=['accuracy'])
@@ -146,7 +146,7 @@ attr.model.compile(optimizer='nadam',
 # save weights of best training epoch: monitor either val_loss or val_acc
 callbacks_list = [
     ModelCheckpoint(attr.summ_basename + "-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-    EarlyStopping(monitor='val_loss', patience=5, verbose=0)
+    EarlyStopping(monitor='val_loss', patience=10, verbose=0)
 ]
 
 # Persist execution attributes for session resume
