@@ -4,11 +4,12 @@ import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix, cohen_kappa_score, roc_auc_score, roc_curve
 from sklearn.metrics import precision_recall_fscore_support as score
 from ExecutionAttributes import ExecutionAttribute
+from TimeCallback import TimeCallback
 from keras import backend as K
 import os
 
 
-def write_summary_txt(execattr : ExecutionAttribute, network_format, image_format, labels):
+def write_summary_txt(execattr : ExecutionAttribute, network_format, image_format, labels, time_callback: TimeCallback):
     with open(execattr.curr_basename + ".txt", "a") as f:
         f.write('EXECUTION SUMMARY\n')
         f.write('-----------------\n\n')
@@ -21,7 +22,9 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
         f.write('Network Type: ' + network_format + '\n')
         f.write('Image Format: ' + image_format + '\n')
         f.write('Image Size: (' + str(execattr.img_width) + ',' + str(execattr.img_height) + ')\n')
-        f.write('Date: ' + datetime.now().strftime("%Y%m%d-%H%M%S") + '\n')
+        f.write('Date: ' + datetime.now().strftime("%Y%m%d") + '\n')
+        f.write('Cycle Started at: ' + execattr.init_timestamp.strftime("%Y%m%d-%H%M%S"))
+        f.write('Cycle Finished at: ' + datetime.now().strftime("%Y%m%d-%H%M%S"))
         f.write('Train Data Path: ' + execattr.train_data_dir + '\n')
         f.write('Train Samples: ' + str(len(execattr.train_generator.filenames)) + '\n')
         f.write('Train Steps: ' + str(execattr.steps_train) + '\n')
@@ -52,6 +55,12 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
         print('Test accuracy:', score_gen[1])
         f.write('Test Loss:' + str(score_gen[0]) + '\n')
         f.write('Test accuracy:' + str(score_gen[1]) + '\n\n')
+
+        print("Training Epochs Duration: ")
+        print(time_callback.times)
+
+        f.write("Training Epochs Duration: " + "\n")
+        f.write(time_callback.times + "\n\n")
 
         # Confusion Matrix and Classification Report
         execattr.test_generator.reset()
@@ -209,8 +218,8 @@ def write_csv_test_result(execattr: ExecutionAttribute, score_gen, y_pred, mtx):
 
         precision, recall, fscore, support = score(execattr.test_generator.classes, y_pred, average='macro')
 
-        csv.write(str(score_gen[0]) + ',' + str(score_gen[1]) + ',' + str(mtx[0, 0]) + ',' + str(mtx[0, 1]) + ',' + str(
-            mtx[1, 0]) + ',' + str(mtx[1, 1]) + ',' + str(precision) + ',' + str(recall) + ',' + str(
+        csv.write(str(score_gen[0]) + ',' + str(score_gen[1]) + ',' + str(mtx[0, 0]) + ',' + str(mtx[1, 0]) + ',' + str(
+            mtx[1, 1]) + ',' + str(mtx[0, 1]) + ',' + str(precision) + ',' + str(recall) + ',' + str(
             fscore) + ',' + str(support) + '\n')
 
         csv.close()

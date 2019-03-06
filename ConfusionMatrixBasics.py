@@ -9,13 +9,17 @@ y_pred = [1, 0, 0, 0, 1, 0, 1, 0]
 
 mtx = confusion_matrix(y_true, y_pred, labels=[1, 0])
 print('Confusion Matrix:')
-print('TP   FP')
-print('FN   TN')
+print('TP   FN')
+print('FP   TN')
 
 print(mtx)
 
+print("TP = " + str(mtx[0, 0]))
+print("FP = " + str(mtx[1, 0]))
+print("TN = " + str(mtx[1, 1]))
+print("FN = " + str(mtx[0, 1]))
 
-print(classification_report(y_true, y_pred, target_names=['caro', 'barato']))
+print(classification_report(y_true, y_pred, target_names=['ok', 'nok']))
 
 auc_score = roc_auc_score(y_true, y_pred)
 

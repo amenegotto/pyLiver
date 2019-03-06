@@ -11,12 +11,14 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from Summary import create_results_dir, get_base_name, plot_train_stats, write_summary_txt
 from ExecutionAttributes import ExecutionAttribute
+from TimeCallback import TimeCallback
 from TrainingResume import save_execution_attributes
+import tensorflow as tf
 
 # fix seed for reproducible results (only works on CPU, not GPU)
 seed = 9
 np.random.seed(seed=seed)
-# tf.set_random_seed(seed=seed)
+tf.set_random_seed(seed=seed)
 
 # Summary Information
 SUMMARY_PATH = "/mnt/data/results"
@@ -59,7 +61,7 @@ attr.model.add(vgg_conv)
 # Add new layers
 attr.model.add(layers.Flatten())
 attr.model.add(layers.Dense(1024, activation='relu'))
-attr.model.add(layers.Dropout(0.5))
+attr.model.add(layers.Dropout(0.3))
 attr.model.add(layers.Dense(2, activation='softmax'))
  
 # Show a summary of the model. Check the number of trainable parameters
@@ -95,7 +97,9 @@ attr.test_generator = test_datagen.flow_from_directory(
         class_mode='categorical',
         shuffle=False)
 
-callbacks = [EarlyStopping(monitor='val_loss', patience=10, mode='min', restore_best_weights=True),
+time_callback = TimeCallback()
+
+callbacks = [time_callback, EarlyStopping(monitor='val_loss', patience=10, mode='min', restore_best_weights=True),
              ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
 
 
@@ -148,6 +152,8 @@ with open(attr.summ_basename + "-predicts.txt", "a") as f:
     print(res)
     f.close()
 
-write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'])
+write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback)
 
 os.system("aws s3 sync " + SUMMARY_BASEPATH + " s3://pyliver-logs/logs/")
+
+# os.system("sudo poweroff")

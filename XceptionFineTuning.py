@@ -10,6 +10,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from Summary import create_results_dir, get_base_name, plot_train_stats, write_summary_txt
 from ExecutionAttributes import ExecutionAttribute
+from TimeCallback import TimeCallback
 from TrainingResume import save_execution_attributes
 
 # fix seed for reproducible results (only works on CPU, not GPU)
@@ -143,8 +144,10 @@ attr.model.compile(optimizer='nadam',
               loss='categorical_crossentropy',
               metrics=['accuracy'])
 
+time_callback = TimeCallback()
+
 # save weights of best training epoch: monitor either val_loss or val_acc
-callbacks_list = [
+callbacks_list = [time_callback,
     ModelCheckpoint(attr.summ_basename + "-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
     EarlyStopping(monitor='val_loss', patience=10, verbose=0)
 ]
@@ -190,7 +193,7 @@ with open(attr.summ_basename + "-predicts.txt", "a") as f:
     print(res)
     f.close()
 
-write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'])
+write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback)
 
 os.system("aws s3 sync " + SUMMARY_BASEPATH + " s3://pyliver-logs/logs/")
-# os.system("poweroff")
+# os.system("sudo poweroff")

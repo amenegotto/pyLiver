@@ -4,13 +4,10 @@
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import load_model
 from keras import backend as K
-from keras.optimizers import RMSprop, Adam 
-from keras.initializers import he_normal
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras import regularizers
-from ExecutionAttributes import ExecutionAttribute
 from Summary import plot_train_stats, create_results_dir, get_base_name, write_summary_txt, save_model
 from TrainingResume import save_execution_attributes, read_attributes
+from TimeCallback import TimeCallback
 import tensorflow as tf
 import numpy as np
 
@@ -21,19 +18,19 @@ tf.set_random_seed(seed=seed)
 
 
 # Summary Information
-#SUMMARY_PATH="/mnt/data/results"
-#SUMMARY_PATH="c:/temp/results"
-SUMMARY_PATH="/tmp/results"
-NETWORK_FORMAT="Unimodal"
-IMAGE_FORMAT="2D"
-SUMMARY_BASEPATH=create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
+# SUMMARY_PATH="/mnt/data/results"
+# SUMMARY_PATH="c:/temp/results"
+SUMMARY_PATH = "/tmp/results"
+NETWORK_FORMAT = "Unimodal"
+IMAGE_FORMAT = "2D"
+SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
 
 # how many times to execute the training/validation/test
 CYCLES = 1
 
 #
 # Execution Attributes
-INITIAL_EPOCH=1
+INITIAL_EPOCH = 1
 attr = read_attributes('/tmp/results/Unimodal/2D/20190201-141755-execution-attributes.properties') 
 
 if K.image_data_format() == 'channels_first':
@@ -45,7 +42,9 @@ for i in range(0, CYCLES):
     # define model
     attr.model = load_model(attr.summ_basename + '-ckweights.h5')
 
-    callbacks = [EarlyStopping(monitor='val_loss', patience=5, mode='min', restore_best_weights=True),
+    time_callback = TimeCallback()
+
+    callbacks = [time_callback, EarlyStopping(monitor='val_loss', patience=5, mode='min', restore_best_weights=True),
                  ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='min', verbose=1, monitor='val_loss', save_best_only=True)]
 
     # this is the augmentation configuration we will use for training
@@ -108,10 +107,10 @@ for i in range(0, CYCLES):
     plot_train_stats(history, attr.curr_basename + '-training_loss.png', attr.curr_basename + '-training_accuracy.png')
 
     # make sure that the best weights are loaded (even if restore_best_weights is already true)
-    attr.model.load_weights(filepath = attr.summ_basename + "-ckweights.h5")
+    attr.model.load_weights(filepath=attr.summ_basename + "-ckweights.h5")
 
     # save model with weights for later reuse
     save_model(attr)
 
     # create confusion matrix and report with accuracy, precision, recall, f-score
-    write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'])
+    write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback)

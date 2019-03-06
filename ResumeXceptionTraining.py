@@ -4,10 +4,8 @@
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import load_model
 from keras import backend as K
-from keras.optimizers import RMSprop, Adam 
-from keras.initializers import he_normal
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras import regularizers
+from TimeCallback import TimeCallback
 from ExecutionAttributes import ExecutionAttribute
 from Summary import plot_train_stats, create_results_dir, get_base_name, write_summary_txt, save_model
 from TrainingResume import save_execution_attributes, read_attributes
@@ -128,8 +126,11 @@ attr.model.compile(optimizer='nadam',
               loss='categorical_crossentropy',
               metrics=['accuracy'])
 
+
+time_callback = TimeCallback()
+
 # save weights of best training epoch: monitor either val_loss or val_acc
-callbacks_list = [
+callbacks_list = [time_callback,
     ModelCheckpoint(attr.summ_basename + "-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
     EarlyStopping(monitor='val_loss', patience=5, verbose=0)
 ]
@@ -170,11 +171,11 @@ label2index = attr.test_generator.class_indices
 idx2label = dict((v,k) for k,v in label2index.items())
 
 # Get the predictions from the model using the generator
-predictions = attr.model.predict_generator(attr.test_generator, steps=attr.steps_test,verbose=1)
-predicted_classes = np.argmax(predictions,axis=1)
+predictions = attr.model.predict_generator(attr.test_generator, steps=attr.steps_test, verbose=1)
+predicted_classes = np.argmax(predictions, axis=1)
 
 errors = np.where(predicted_classes != ground_truth)[0]
-res="No of errors = {}/{}".format(len(errors),attr.test_generator.samples)
+res="No of errors = {}/{}".format(len(errors), attr.test_generator.samples)
 with open(attr.summ_basename + "-predicts.txt", "a") as f:
     f.write(res)
     print(res)

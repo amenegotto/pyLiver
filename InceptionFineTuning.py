@@ -11,6 +11,7 @@ from keras.optimizers import SGD
 import numpy as np
 from Summary import create_results_dir, get_base_name, plot_train_stats, write_summary_txt
 from ExecutionAttributes import ExecutionAttribute
+from TimeCallback import TimeCallback
 from TrainingResume import save_execution_attributes
 
 # fix seed for reproducible results (only works on CPU, not GPU)
@@ -122,8 +123,10 @@ for i, layer in enumerate(base_model.layers):
 
 attr.model.load_weights(attr.summ_basename + "-mid-ckweights.h5")
 
+time_callback = TimeCallback()
+
 #Save the model after every epoch.
-callbacks_list = [
+callbacks_list = [time_callback,
     ModelCheckpoint(attr.summ_basename + "-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
     EarlyStopping(monitor='val_loss', patience=10, verbose=0)
 ]
@@ -176,6 +179,6 @@ with open(attr.summ_basename + "-predicts.txt", "a") as f:
     print(res)
     f.close()
 
-write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'])
+write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback)
 
 os.system("aws s3 sync " + SUMMARY_BASEPATH + " s3://pyliver-logs/logs/")
