@@ -23,8 +23,8 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
         f.write('Image Format: ' + image_format + '\n')
         f.write('Image Size: (' + str(execattr.img_width) + ',' + str(execattr.img_height) + ')\n')
         f.write('Date: ' + datetime.now().strftime("%Y%m%d") + '\n')
-        f.write('Cycle Started at: ' + execattr.init_timestamp.strftime("%Y%m%d-%H%M%S"))
-        f.write('Cycle Finished at: ' + datetime.now().strftime("%Y%m%d-%H%M%S"))
+        f.write('Cycle Started at: ' + execattr.init_timestamp.strftime("%Y%m%d-%H%M%S") + '\n')
+        f.write('Cycle Finished at: ' + datetime.now().strftime("%Y%m%d-%H%M%S") + '\n')
         f.write('Train Data Path: ' + execattr.train_data_dir + '\n')
         f.write('Train Samples: ' + str(len(execattr.train_generator.filenames)) + '\n')
         f.write('Train Steps: ' + str(execattr.steps_train) + '\n')
@@ -59,8 +59,8 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
         print("Training Epochs Duration: ")
         print(time_callback.times)
 
-        f.write("Training Epochs Duration: " + "\n")
-        f.write(time_callback.times + "\n\n")
+        f.write("\n\nTraining Epochs Duration: " + "\n")
+        print(time_callback.times, file=f)
 
         # Confusion Matrix and Classification Report
         execattr.test_generator.reset()
