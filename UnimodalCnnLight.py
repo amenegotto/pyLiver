@@ -43,10 +43,10 @@ attr.img_width, attr.img_height = 150, 150
 # network parameters
 # attr.path='C:/Users/hp/Downloads/cars_train'
 # attr.path='/home/amenegotto/dataset/2d/com_pre_proc/'
-attr.path = '/mnt/data/image/2d/com_pre_proc'
+attr.path = '/mnt/data/image/2d/sem_pre_proc'
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 200 
-attr.batch_size = 128 
+attr.epochs = 200
+attr.batch_size = 64
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':
@@ -60,37 +60,41 @@ for i in range(0, CYCLES):
     attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(BatchNormalization())
     attr.model.add(Activation('relu'))
+    attr.model.add(Dropout(0.25))
     attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(BatchNormalization())
     attr.model.add(Activation('relu'))
+    attr.model.add(Dropout(0.25))
     attr.model.add(MaxPooling2D(pool_size=(3, 3), input_shape=input_s))
-    # attr.model.add(Dropout(0.5))
+
 
     attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(BatchNormalization())
     attr.model.add(Activation('relu'))
+    attr.model.add(Dropout(0.25))
     attr.model.add(Conv2D(32, (3, 3), input_shape=input_s, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(BatchNormalization())
     attr.model.add(Activation('relu'))
+    attr.model.add(Dropout(0.25))
     attr.model.add(MaxPooling2D(pool_size=(3, 3), input_shape=input_s))
-    # attr.model.add(Dropout(0.5))
+
 
     attr.model.add(Flatten())  # this converts our 3D feature maps to 1D feature vectors
     attr.model.add(Dense(512, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(BatchNormalization())
     attr.model.add(Activation('relu'))
-    # attr.model.add(Dropout(0.5))
+    attr.model.add(Dropout(0.25))
     attr.model.add(Dense(1024, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(Dense(1))
     attr.model.add(Activation('sigmoid'))
 
     # compile model using accuracy as main metric, rmsprop (gradient descendent)
     attr.model.compile(loss='binary_crossentropy',
-                  optimizer=RMSprop(lr=0.00001),
+                  optimizer=RMSprop(lr=0.000001),
                   metrics=['accuracy'])
 
     time_callback = TimeCallback()
-    callbacks = [time_callback, EarlyStopping(monitor='val_loss', patience=20, mode='min', restore_best_weights=True),
+    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=10, mode='max', restore_best_weights=True),
                  ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
 
     # this is the augmentation configuration we will use for training
