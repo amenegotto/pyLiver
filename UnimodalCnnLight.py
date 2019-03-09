@@ -6,7 +6,7 @@ from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense, BatchNormalization
 from keras import backend as K
-from keras.optimizers import RMSprop
+from keras.optimizers import RMSprop, Adam
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras import regularizers
 from ExecutionAttributes import ExecutionAttribute
@@ -90,11 +90,11 @@ for i in range(0, CYCLES):
 
     # compile model using accuracy as main metric, rmsprop (gradient descendent)
     attr.model.compile(loss='binary_crossentropy',
-                  optimizer=RMSprop(lr=0.000001),
+                  optimizer=Adam(lr=0.00001),
                   metrics=['accuracy'])
 
     time_callback = TimeCallback()
-    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=10, mode='max', restore_best_weights=True),
+    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=15, mode='max', restore_best_weights=True),
                  ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
 
     # this is the augmentation configuration we will use for training
