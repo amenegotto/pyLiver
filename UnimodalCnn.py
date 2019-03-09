@@ -46,7 +46,7 @@ attr.img_width, attr.img_height = 150, 150
 attr.path = '/mnt/data/image/2d/com_pre_proc/'
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
 attr.epochs = 200
-attr.batch_size = 64
+attr.batch_size = 32
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':

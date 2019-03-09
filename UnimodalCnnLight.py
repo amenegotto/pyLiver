@@ -43,10 +43,10 @@ attr.img_width, attr.img_height = 150, 150
 # network parameters
 # attr.path='C:/Users/hp/Downloads/cars_train'
 # attr.path='/home/amenegotto/dataset/2d/com_pre_proc/'
-attr.path = '/mnt/data/image/2d/sem_pre_proc'
+attr.path = '/mnt/data/image/2d/com_pre_proc'
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
 attr.epochs = 200
-attr.batch_size = 64
+attr.batch_size = 256
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':
