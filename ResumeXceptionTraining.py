@@ -7,8 +7,8 @@ from keras import backend as K
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from TimeCallback import TimeCallback
 from ExecutionAttributes import ExecutionAttribute
-from Summary import plot_train_stats, create_results_dir, get_base_name, write_summary_txt, save_model
-from TrainingResume import save_execution_attributes, read_attributes
+from Summary import plot_train_stats, create_results_dir, get_base_name, write_summary_txt, copy_to_s3
+from TrainingResume import save_execution_attributes
 import tensorflow as tf
 import numpy as np
 
@@ -182,3 +182,5 @@ with open(attr.summ_basename + "-predicts.txt", "a") as f:
     f.close()
 
 write_summary_txt(attr, "Unimodal", "2D", ['negative', 'positive'])
+
+copy_to_s3(attr)

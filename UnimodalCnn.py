@@ -11,7 +11,7 @@ from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras import regularizers
 from ExecutionAttributes import ExecutionAttribute
 from TimeCallback import TimeCallback
-from Summary import plot_train_stats, create_results_dir, get_base_name, write_summary_txt, save_model
+from Summary import plot_train_stats, create_results_dir, get_base_name, write_summary_txt, save_model, copy_to_s3
 from TrainingResume import save_execution_attributes
 import os
 import numpy as np
@@ -160,5 +160,5 @@ for i in range(0, CYCLES):
 
     K.clear_session()
 
-os.system("aws s3 sync " + SUMMARY_BASEPATH + " s3://pyliver-logs/logs/")
-# os.system("poweroff")
+copy_to_s3(attr)
+# os.system("sudo poweroff")

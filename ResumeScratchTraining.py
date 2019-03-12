@@ -5,7 +5,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.models import load_model
 from keras import backend as K
 from keras.callbacks import EarlyStopping, ModelCheckpoint
-from Summary import plot_train_stats, create_results_dir, get_base_name, write_summary_txt, save_model
+from Summary import plot_train_stats, create_results_dir, write_summary_txt, save_model, copy_to_s3
 from TrainingResume import save_execution_attributes, read_attributes
 from TimeCallback import TimeCallback
 import tensorflow as tf
@@ -114,3 +114,5 @@ for i in range(0, CYCLES):
 
     # create confusion matrix and report with accuracy, precision, recall, f-score
     write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback)
+
+copy_to_s3(attr)

@@ -9,7 +9,7 @@ from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.optimizers import SGD
 import numpy as np
-from Summary import create_results_dir, get_base_name, plot_train_stats, write_summary_txt
+from Summary import create_results_dir, get_base_name, plot_train_stats, write_summary_txt, copy_to_s3
 from ExecutionAttributes import ExecutionAttribute
 from TimeCallback import TimeCallback
 from TrainingResume import save_execution_attributes
@@ -181,4 +181,4 @@ with open(attr.summ_basename + "-predicts.txt", "a") as f:
 
 write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback)
 
-os.system("aws s3 sync " + SUMMARY_BASEPATH + " s3://pyliver-logs/logs/")
+copy_to_s3(attr)

@@ -244,3 +244,6 @@ def get_base_name(basepath):
 
 def save_model(execattr: ExecutionAttribute):
     execattr.model.save(execattr.summ_basename + "-model.h5")
+
+def copy_to_s3(execattr: ExecutionAttribute):
+    os.system("aws s3 cp . s3://pyliver-logs/logs/ --recursive --exclude\"*\" --include \"" + execattr.summ_basename + "*\"")
