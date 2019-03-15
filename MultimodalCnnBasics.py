@@ -10,29 +10,65 @@ from keras.optimizers import RMSprop, Adam
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras import regularizers
 from ExecutionAttributes import ExecutionAttribute
-from TimeCallback import TimeCallback
 from keras.utils import plot_model
+from skimage import io as io
+import cv2
 import os
+import pandas as pd
+import numpy as np
+from sklearn.metrics import classification_report, confusion_matrix, cohen_kappa_score, roc_auc_score, roc_curve
+from sklearn.metrics import precision_recall_fscore_support as score
+
+
 os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin'
 
 # Execution Attributes
 attr = ExecutionAttribute()
 
 # dimensions of our images.
-attr.img_width, attr.img_height = 150, 150
+attr.img_width, attr.img_height = 32, 32
 
 # network parameters
-# attr.path='C:/Users/hp/Downloads/cars_train'
-# attr.path='/home/amenegotto/dataset/2d/com_pre_proc/'
-attr.path = '/mnt/data/image/2d/com_pre_proc'
+attr.path = 'C:/Users/hp/Downloads/cars_train'
 attr.epochs = 200
-attr.batch_size = 256
+attr.batch_size = 8
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':
-    input_s = (1, attr.img_width, attr.img_height)
+    input_s = (3, attr.img_width, attr.img_height)
 else:
-    input_s = (attr.img_width, attr.img_height, 1)
+    input_s = (attr.img_width, attr.img_height, 3)
+
+
+def load_data(filepath):
+    files = pd.read_csv(filepath)
+
+    images = []
+    prices = []
+    labels = []
+
+    for row in files.itertuples():
+        print(row.path + ' - ' + str(row.price))
+
+        # img = io.imread(attr.path + '/' + row.path, as_grey=False)
+        # img = img.reshape([attr.img_width, attr.img_height, 3])
+
+        image = cv2.imread(attr.path + '/' + row.path)
+        image = cv2.resize(image, (attr.img_width, attr.img_height))
+
+        images.append(image)
+        prices.append(row.price)
+        if "barato" in row.path:
+            labels.append(0)
+        else:
+            labels.append(1)
+
+    return np.array(images), np.array(prices), np.array(labels)
+
+
+images_train, prices_train, labels_train = load_data(attr.path + '/trein.csv')
+images_valid, prices_valid, labels_valid = load_data(attr.path + '/valid.csv')
+images_test, prices_test, labels_test = load_data(attr.path + '/test.csv')
 
 # define CNN for image
 image_input = Input(shape=input_s)
@@ -47,105 +83,72 @@ x = Activation("relu")(x)
 x = Dropout(0.25)(x)
 x = MaxPooling2D(pool_size=(3, 3))(x)
 
-x = Conv2D(32, (3, 3), kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(x)
-x = BatchNormalization()(x)
-x = Activation("relu")(x)
-x = Dropout(0.25)(x)
-x = Conv2D(32, (3, 3), kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(x)
-x = BatchNormalization()(x)
-x = Activation("relu")(x)
-x = Dropout(0.25)(x)
-x = MaxPooling2D(pool_size=(3, 3))(x)
-
 x = Flatten()(x)
-x = Dense(512, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(x)
+
+attributes_input = Input(shape=(1,))
+
+# as in this POC we have only one auxiliary variable, there's no need for another ANN, just concat in flatten before FC
+concat = concatenate([x, attributes_input])
+
+x = Dense(128, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(concat)
 x = BatchNormalization()(x)
 x = Activation("relu")(x)
 x = Dropout(0.25)(x)
-x = Dense(1024, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(x)
+x = Dense(512, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(x)
 
 image_output = Dense(1, activation='sigmoid')(x)
-image_model = Model(inputs=image_input, outputs=image_output)
+image_model = Model(inputs=[image_input, attributes_input], outputs=image_output)
 
 
 # define ANN for additional data
-attributes_input = Input(shape=(5,))
-y = Dense(32, activation='relu')(attributes_input)
-x = Dropout(0.25)(x)
-y = Dense(64, activation='relu')(y)
-x = Dropout(0.25)(x)
-y = Dense(32, activation='relu')(y)
-attributes_output = Dense(1, activation='sigmoid')(y)
-attributes_model = Model(inputs=attributes_input, outputs=attributes_output)
+# attributes_input = Input(shape=(1,))
+# y = Dense(32, activation='relu')(attributes_input)
+# y = Dropout(0.25)(y)
+# y = Dense(64, activation='relu')(y)
+# y = Dropout(0.25)(y)
+# y = Dense(32, activation='relu')(y)
+# attributes_output = Dense(1, activation='sigmoid')(y)
+# attributes_model = Model(inputs=attributes_input, outputs=attributes_output)
 
 # late fusion both models
-combinedInput = concatenate([image_model.output, attributes_model.output])
+# combinedInput = concatenate([image_model.output, attributes_model.output])
 
-merged = Dense(6, activation='relu')(combinedInput)
-merged_output = Dense(1, activation='sigmoid')(merged)
-
-
-attr.model = Model(inputs=[image_input, attributes_input], outputs=merged_output)
+# merged = Dense(2, activation='relu')(combinedInput)
+# merged_output = Dense(1, activation='sigmoid')(merged)
 
 
-print(attr.model.summary())
+# attr.model = Model(inputs=[image_input, attributes_input], outputs=merged_output)
 
-plot_model(attr.model, to_file='c:/temp/multimodal.png', show_shapes=True, show_layer_names=True)
+opt = Adam(lr=1e-3, decay=1e-3 / 200)
+image_model.compile(optimizer=opt)
 
-# compile model using accuracy as main metric, rmsprop (gradient descendent)
-#attr.model.compile(loss='binary_crossentropy',
-#              optimizer=Adam(lr=0.00001),
-#              metrics=['accuracy'])
+print(labels_train.shape())
+print(attributes_input.shape())
 
-# this is the augmentation configuration we will use for training
-#train_datagen = ImageDataGenerator(
-#        rotation_range=2,
-#        width_shift_range=0.2,
-#        height_shift_range=0.2,
-#        rescale=1./255,
-#        shear_range=0.2,
-#        zoom_range=0.1,
-#        horizontal_flip=True,
-#        fill_mode='nearest')
 
-# this is the augmentation configuration we will use for testing:
-# only rescaling
-#test_datagen = ImageDataGenerator(
-#        rescale=1. / 255
-#        )
+# train the model
+print("[INFO] training model...")
+image_model.fit(
+	[images_train, prices_train], labels_train,
+	validation_data=([images_valid, prices_valid], labels_valid),
+	epochs=200, batch_size=8)
 
-#attr.train_generator = train_datagen.flow_from_directory(
-#    attr.train_data_dir,
-#    target_size=(attr.img_width, attr.img_height),
-#    batch_size=attr.batch_size,
-#    shuffle=True,
-#    color_mode='grayscale',
-#    class_mode='binary')
+# make predictions on the testing data
+print("[INFO] predicting house prices...")
+Y_pred = image_model.predict([images_test, prices_test])
+y_pred = np.argmax(Y_pred, axis=1)
 
-#attr.validation_generator = test_datagen.flow_from_directory(
-#    attr.validation_data_dir,
-#    target_size=(attr.img_width, attr.img_height),
-#    batch_size=attr.batch_size,
-#    shuffle=True,
-#    color_mode='grayscale',
-#    class_mode='binary')
+print(Y_pred)
+print(y_pred)
 
-#attr.test_generator = test_datagen.flow_from_directory(
-#    attr.test_data_dir,
-#    target_size=(attr.img_width, attr.img_height),
-##    batch_size=1,
-#    shuffle=False,
-#    color_mode='grayscale',
-#    class_mode='binary')
+mtx = confusion_matrix(labels_test, y_pred)
+print('Confusion Matrix:')
+print(mtx)
 
-# calculate steps based on number of images and batch size
-#attr.calculate_steps()
+print(classification_report(labels_test, y_pred))
 
-# training time
-#history = attr.model.fit_generator(
-#    attr.train_generator,
-#    steps_per_epoch=attr.steps_train,
-#    epochs=attr.epochs,
-#    validation_data=attr.validation_generator,
-#    validation_steps=attr.steps_valid,
-#    use_multiprocessing=False)
+cohen_score = cohen_kappa_score(labels_test, y_pred)
+print("Kappa Score = " + str(cohen_score))
+
+auc_score = roc_auc_score(labels_test, y_pred)
+print("ROC AUC Score = " + str(auc_score))
