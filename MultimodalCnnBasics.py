@@ -18,7 +18,8 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix, cohen_kappa_score, roc_auc_score, roc_curve
 from sklearn.metrics import precision_recall_fscore_support as score
-
+from keras.preprocessing.image import load_img, img_to_array
+from sklearn.preprocessing import LabelEncoder
 
 os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin'
 
@@ -42,62 +43,95 @@ else:
 
 def load_data(filepath):
     files = pd.read_csv(filepath)
-
     images = []
-    prices = []
+    prices = files[['price']]
     labels = []
 
-    for row in files.itertuples():
-        print(row.path + ' - ' + str(row.price))
+    for i, r in files.iterrows():
+        print(r['path'] + ' - ' + str(r['price']))
 
-        # img = io.imread(attr.path + '/' + row.path, as_grey=False)
-        # img = img.reshape([attr.img_width, attr.img_height, 3])
+        #image = load_img(attr.path + '/' + r['path'])
+        #image.thumbnail((attr.img_width, attr.img_height))
 
-        image = cv2.imread(attr.path + '/' + row.path)
+        # image = io.imread()
+        # image = image.reshape([attr.img_width, attr.img_height, 3])
+
+        image = cv2.imread(attr.path + '/' + r['path'])
         image = cv2.resize(image, (attr.img_width, attr.img_height))
-
+        image = img_to_array(image)
         images.append(image)
-        prices.append(row.price)
-        if "barato" in row.path:
+
+        if "barato" in r['path']:
             labels.append(0)
         else:
             labels.append(1)
 
-    return np.array(images), np.array(prices), np.array(labels)
+    return (np.array(images, dtype="float") / 255.0), np.array(prices), np.array(labels)
 
 
 images_train, prices_train, labels_train = load_data(attr.path + '/trein.csv')
 images_valid, prices_valid, labels_valid = load_data(attr.path + '/valid.csv')
 images_test, prices_test, labels_test = load_data(attr.path + '/test.csv')
 
+print("[INFO] Training image size: {:.2f}MB".format(images_train.nbytes / (1024 * 1000.0)))
+print("[INFO] Validation image size: {:.2f}MB".format(images_valid.nbytes / (1024 * 1000.0)))
+print("[INFO] Testing image size: {:.2f}MB".format(images_test.nbytes / (1024 * 1000.0)))
+
 # define CNN for image
-image_input = Input(shape=input_s)
-
-x = Conv2D(32, (3, 3), kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(image_input)
-x = BatchNormalization()(x)
-x = Activation("relu")(x)
-x = Dropout(0.25)(x)
-x = Conv2D(32, (3, 3), kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(x)
-x = BatchNormalization()(x)
-x = Activation("relu")(x)
-x = Dropout(0.25)(x)
-x = MaxPooling2D(pool_size=(3, 3))(x)
-
-x = Flatten()(x)
-
-attributes_input = Input(shape=(1,))
+visible = Input(shape=input_s)
+conv1 = Conv2D(32, kernel_size=4, activation='relu')(visible)
+pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
+conv2 = Conv2D(16, kernel_size=4, activation='relu')(pool1)
+pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
+flat = Flatten()(pool2)
 
 # as in this POC we have only one auxiliary variable, there's no need for another ANN, just concat in flatten before FC
-concat = concatenate([x, attributes_input])
+attributes_input = Input(shape=(1,))
+concat = concatenate([flat, attributes_input])
 
-x = Dense(128, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(concat)
-x = BatchNormalization()(x)
-x = Activation("relu")(x)
-x = Dropout(0.25)(x)
-x = Dense(512, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(x)
+hidden1 = Dense(10, activation='relu')(concat)
+output = Dense(1, activation='sigmoid')(hidden1)
+model = Model(inputs=[visible, attributes_input], outputs=output)
 
-image_output = Dense(1, activation='sigmoid')(x)
-image_model = Model(inputs=[image_input, attributes_input], outputs=image_output)
+# model.summary()
+# plot_model(model, to_file='c:/temp/foo2.png')
+
+
+opt = Adam(lr=1e-3, decay=1e-3 / 200)
+model.compile(loss='binary_crossentropy', optimizer=opt,  metrics=['accuracy'])
+
+# train the model
+print("[INFO] training model...")
+model.fit(
+	[images_train, prices_train], labels_train,
+	validation_data=([images_valid, prices_valid], labels_valid),
+	epochs=20, batch_size=4)
+
+# make predictions on the testing data
+print("[INFO] predicting car prices...")
+Y_pred = model.predict([images_test, prices_test])
+y_pred = np.argmax(Y_pred, axis=1)
+
+print(Y_pred)
+print(y_pred)
+
+mtx = confusion_matrix(labels_test, y_pred)
+print('Confusion Matrix:')
+print(mtx)
+
+print(classification_report(labels_test, y_pred))
+
+cohen_score = cohen_kappa_score(labels_test, y_pred)
+print("Kappa Score = " + str(cohen_score))
+
+auc_score = roc_auc_score(labels_test, y_pred)
+print("ROC AUC Score = " + str(auc_score))
+
+
+
+
+
+
 
 
 # define ANN for additional data
@@ -118,37 +152,3 @@ image_model = Model(inputs=[image_input, attributes_input], outputs=image_output
 
 
 # attr.model = Model(inputs=[image_input, attributes_input], outputs=merged_output)
-
-opt = Adam(lr=1e-3, decay=1e-3 / 200)
-image_model.compile(optimizer=opt)
-
-print(labels_train.shape())
-print(attributes_input.shape())
-
-
-# train the model
-print("[INFO] training model...")
-image_model.fit(
-	[images_train, prices_train], labels_train,
-	validation_data=([images_valid, prices_valid], labels_valid),
-	epochs=200, batch_size=8)
-
-# make predictions on the testing data
-print("[INFO] predicting house prices...")
-Y_pred = image_model.predict([images_test, prices_test])
-y_pred = np.argmax(Y_pred, axis=1)
-
-print(Y_pred)
-print(y_pred)
-
-mtx = confusion_matrix(labels_test, y_pred)
-print('Confusion Matrix:')
-print(mtx)
-
-print(classification_report(labels_test, y_pred))
-
-cohen_score = cohen_kappa_score(labels_test, y_pred)
-print("Kappa Score = " + str(cohen_score))
-
-auc_score = roc_auc_score(labels_test, y_pred)
-print("ROC AUC Score = " + str(auc_score))
