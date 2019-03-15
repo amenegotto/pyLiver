@@ -79,10 +79,12 @@ print("[INFO] Testing image size: {:.2f}MB".format(images_test.nbytes / (1024 * 
 
 # define CNN for image
 visible = Input(shape=input_s)
-conv1 = Conv2D(32, kernel_size=4, activation='relu')(visible)
-pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
-conv2 = Conv2D(16, kernel_size=4, activation='relu')(pool1)
-pool2 = MaxPooling2D(pool_size=(2, 2))(conv2)
+conv1 = Conv2D(32, (3,3), activation='relu')(visible)
+bn1 = BatchNormalization()(conv1)
+pool1 = MaxPooling2D(pool_size=(2, 2))(bn1)
+conv2 = Conv2D(16, (3,3), activation='relu')(pool1)
+bn2 = BatchNormalization()(conv2)
+pool2 = MaxPooling2D(pool_size=(2, 2))(bn2)
 flat = Flatten()(pool2)
 
 # as in this POC we have only one auxiliary variable, there's no need for another ANN, just concat in flatten before FC
