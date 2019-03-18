@@ -14,6 +14,8 @@ from ExecutionAttributes import ExecutionAttribute
 from TimeCallback import TimeCallback
 from TrainingResume import save_execution_attributes
 import tensorflow as tf
+from keras.utils import plot_model
+
 
 # fix seed for reproducible results (only works on CPU, not GPU)
 seed = 9
@@ -66,6 +68,7 @@ attr.model.add(layers.Dense(2, activation='softmax'))
  
 # Show a summary of the model. Check the number of trainable parameters
 attr.model.summary()
+plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
 
 # prepare data augmentation configuration
 train_datagen = ImageDataGenerator(

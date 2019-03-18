@@ -13,6 +13,8 @@ from Summary import create_results_dir, get_base_name, plot_train_stats, write_s
 from ExecutionAttributes import ExecutionAttribute
 from TimeCallback import TimeCallback
 from TrainingResume import save_execution_attributes
+from keras.utils import plot_model
+
 
 # fix seed for reproducible results (only works on CPU, not GPU)
 seed = 9
@@ -141,6 +143,8 @@ for layer in attr.model.layers[172:]:
 # we need to recompile the model for these modifications to take effect
 # we use SGD with a low learning rate
 attr.model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'])
+
+plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
 
 history = attr.model.fit_generator(
     attr.train_generator,

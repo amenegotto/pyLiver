@@ -12,6 +12,8 @@ from Summary import create_results_dir, get_base_name, plot_train_stats, write_s
 from ExecutionAttributes import ExecutionAttribute
 from TimeCallback import TimeCallback
 from TrainingResume import save_execution_attributes
+from keras.utils import plot_model
+
 
 # fix seed for reproducible results (only works on CPU, not GPU)
 seed = 9
@@ -107,6 +109,8 @@ callbacks = [
 ]
 
 attr.model.compile(optimizer='nadam', loss='categorical_crossentropy', metrics=['accuracy'])
+
+plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
 
 # calculate steps based on number of images and batch size
 attr.calculate_steps()

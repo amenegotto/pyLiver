@@ -25,6 +25,8 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
         f.write('Date: ' + datetime.now().strftime("%Y%m%d") + '\n')
         f.write('Cycle Started at: ' + execattr.init_timestamp.strftime("%Y%m%d-%H%M%S") + '\n')
         f.write('Cycle Finished at: ' + datetime.now().strftime("%Y%m%d-%H%M%S") + '\n')
+        if execattr.csv_path != "":
+            f.write('CSV File: ' + execattr.csv_path + '\n')
         f.write('Train Data Path: ' + execattr.train_data_dir + '\n')
         f.write('Train Samples: ' + str(len(execattr.train_generator.filenames)) + '\n')
         f.write('Train Steps: ' + str(execattr.steps_train) + '\n')

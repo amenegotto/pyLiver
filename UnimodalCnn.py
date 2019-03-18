@@ -16,6 +16,8 @@ from TrainingResume import save_execution_attributes
 import os
 import numpy as np
 import tensorflow as tf
+from keras.utils import plot_model
+
 
 # fix seed for reproducible results (only works on CPU, not GPU)
 seed = 9
@@ -79,6 +81,8 @@ for i in range(0, CYCLES):
     attr.model.compile(loss='binary_crossentropy',
                   optimizer=RMSprop(lr=0.000001),
                   metrics=['accuracy'])
+
+    plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
 
     time_callback = TimeCallback()
 

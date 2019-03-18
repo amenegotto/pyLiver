@@ -4,8 +4,13 @@ import cv2
 from keras.preprocessing.image import img_to_array
 import numpy as np
 
+
 def get_patient_info(patient_id, clinical_data):
-    return clinical_data[clinical_data["Patient"] == patient_id]
+    patient_row = clinical_data[clinical_data["Patient"] == patient_id]
+    patient_row.drop('Source', axis=1, inplace=True)
+    patient_row.drop('Patient', axis=1, inplace=True)
+    patient_row.drop('Hcc', axis=1, inplace=True)
+    return patient_row
 
 
 def get_image(image_path, img_width, img_height):
@@ -15,7 +20,7 @@ def get_image(image_path, img_width, img_height):
     return image
 
 
-def load_data(images_path, csv_path, img_width, img_height):
+def load_data(images_path, csv_path, img_width, img_height, show_info: False):
     images_train = []
     images_valid = []
     images_test = []
@@ -72,16 +77,25 @@ def load_data(images_path, csv_path, img_width, img_height):
                         attributes_test.append(patient_data.values)
                         labels_test.append(0)
 
-    return (np.array(images_train, dtype="float") / 255.0), np.array(attributes_train), np.array(labels_train), (np.array(images_valid, dtype="float") / 255.0), np.array(attributes_valid), np.array(labels_valid), (np.array(images_test, dtype="float") / 255.0), np.array(attributes_test), np.array(labels_test)
+    images_train = (np.array(images_train, dtype="float") / 255.0)
+    attributes_train = np.array(attributes_train)
+    labels_train = np.array(labels_train)
+    images_valid = (np.array(images_valid, dtype="float") / 255.0)
+    attributes_valid = np.array(attributes_valid)
+    labels_valid = np.array(labels_valid)
+    images_test = (np.array(images_test, dtype="float") / 255.0)
+    attributes_test = np.array(attributes_test)
+    labels_test = np.array(labels_test)
 
+    if show_info:
+        print("------------------------------------------")
+        print("[INFO] Training image count: {:.2f}".format(len(images_train)))
+        print("[INFO] Validation image count: {:.2f}".format(len(images_valid)))
+        print("[INFO] Testing image count: {:.2f}".format(len(images_test)))
+        print("[INFO] Training image size: {:.2f}MB".format(images_train.nbytes / (1024 * 1000.0)))
+        print("[INFO] Validation image size: {:.2f}MB".format(images_valid.nbytes / (1024 * 1000.0)))
+        print("[INFO] Testing image size: {:.2f}MB".format(images_test.nbytes / (1024 * 1000.0)))
+        print("------------------------------------------")
 
-images_train, attributes_train, labels_train, images_valid, attributes_valid, labels_valid, images_test, attributes_test, labels_test = load_data('C:/Users/hp/dataset/images/2d/com_pre_proc', 'csv/clinical_data.csv', 32, 32)
+    return images_train, attributes_train, labels_train, images_valid, attributes_valid, labels_valid, images_test, attributes_test, labels_test
 
-print("------------------------------------------")
-print("[INFO] Training image count: {:.2f}".format(len(images_train)))
-print("[INFO] Validation image count: {:.2f}".format(len(images_valid)))
-print("[INFO] Testing image count: {:.2f}".format(len(images_test)))
-print("[INFO] Training image size: {:.2f}MB".format(images_train.nbytes / (1024 * 1000.0)))
-print("[INFO] Validation image size: {:.2f}MB".format(images_valid.nbytes / (1024 * 1000.0)))
-print("[INFO] Testing image size: {:.2f}MB".format(images_test.nbytes / (1024 * 1000.0)))
-print("------------------------------------------")
