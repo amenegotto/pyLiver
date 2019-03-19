@@ -7,13 +7,12 @@ import numpy as np
 
 def get_patient_info(patient_id, clinical_data):
     patient_row = clinical_data[clinical_data["Patient"] == patient_id]
-    patient_row.drop('Source', axis=1, inplace=True)
-    patient_row.drop('Patient', axis=1, inplace=True)
-    patient_row.drop('Hcc', axis=1, inplace=True)
+    patient_row.drop(['Source', 'Patient', 'Hcc'], axis=1, inplace=True)
     return patient_row
 
 
 def get_image(image_path, img_width, img_height):
+    print('[INFO] Loading ' + image_path)
     image = cv2.imread(image_path)
     image = cv2.resize(image, (img_width, img_height))
     image = img_to_array(image)
@@ -41,6 +40,10 @@ def load_data(images_path, csv_path, img_width, img_height, show_info: False):
 
     # search recursively for png files
     for dirpath, dirs, files in os.walk(images_path):
+        images_count = len(files)
+        if images_count > 0:
+            print("[INFO] Found " + str(len(files)) + " images...")
+
         for f in files:
             if os.path.splitext(f)[1] == ".png":
                 absolute_path = dirpath + '/' + f
@@ -51,28 +54,28 @@ def load_data(images_path, csv_path, img_width, img_height, show_info: False):
                 patient_data = get_patient_info(patient_id, clinical_data)
 
                 if img_info[1] == "ok":
-                    if img_info[2] == "train":
+                    if img_info[0] == "train":
                         images_train.append(get_image(absolute_path, img_width, img_height))
                         attributes_train.append(patient_data.values)
                         labels_train.append(1)
-                    elif img_info[2] == "valid":
+                    elif img_info[0] == "valid":
                         images_valid.append(get_image(absolute_path, img_width, img_height))
                         attributes_valid.append(patient_data.values)
                         labels_valid.append(1)
-                    elif img_info[2] == "test":
+                    elif img_info[0] == "test":
                         images_test.append(get_image(absolute_path, img_width, img_height))
                         attributes_test.append(patient_data.values)
                         labels_test.append(1)
                 elif img_info[1] == "nok":
-                    if img_info[2] == "train":
+                    if img_info[0] == "train":
                         images_train.append(get_image(absolute_path, img_width, img_height))
                         attributes_train.append(patient_data.values)
                         labels_train.append(0)
-                    elif img_info[2] == "valid":
+                    elif img_info[0] == "valid":
                         images_valid.append(get_image(absolute_path, img_width, img_height))
                         attributes_valid.append(patient_data.values)
                         labels_valid.append(0)
-                    elif img_info[2] == "test":
+                    elif img_info[0] == "test":
                         images_test.append(get_image(absolute_path, img_width, img_height))
                         attributes_test.append(patient_data.values)
                         labels_test.append(0)

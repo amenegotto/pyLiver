@@ -20,9 +20,9 @@ from keras.utils import plot_model
 
 
 # fix seed for reproducible results (only works on CPU, not GPU)
-seed = 9
-np.random.seed(seed=seed)
-tf.set_random_seed(seed=seed)
+#seed = 9
+#np.random.seed(seed=seed)
+#tf.set_random_seed(seed=seed)
 
 # Summary Information
 SUMMARY_PATH = "/mnt/data/results"
@@ -40,7 +40,7 @@ CYCLES = 1
 attr = ExecutionAttribute()
 
 # dimensions of our images.
-attr.img_width, attr.img_height = 150, 150
+attr.img_width, attr.img_height = 96, 96
 
 # network parameters
 # attr.path='C:/Users/hp/Downloads/cars_train'
@@ -72,14 +72,16 @@ for i in range(0, CYCLES):
     attr.model.add(Flatten())  # this converts our 3D feature maps to 1D feature vectors
     attr.model.add(Dense(256, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(Activation('relu'))
-    attr.model.add(Dropout(0.25))
+    attr.model.add(Dropout(0.40))
     attr.model.add(Dense(256, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
-    attr.model.add(Dense(1))
+    attr.model.add(Activation('relu'))
+    attr.model.add(Dropout(0.40))
+    aattr.model.add(Dense(1))
     attr.model.add(Activation('sigmoid'))
 
     # compile model using accuracy as main metric, rmsprop (gradient descendent)
     attr.model.compile(loss='binary_crossentropy',
-                  optimizer=RMSprop(lr=0.000001),
+                  optimizer=RMSprop(lr=0.00001),
                   metrics=['accuracy'])
 
     plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
@@ -92,11 +94,11 @@ for i in range(0, CYCLES):
     # this is the augmentation configuration we will use for training
     train_datagen = ImageDataGenerator(
          #   rotation_range=2,
-         #   width_shift_range=0.2,
-         #   height_shift_range=0.2,
+            width_shift_range=0.2,
+            height_shift_range=0.2,
             rescale=1./255,
-         #   shear_range=0.2,
-         #   zoom_range=0.1,
+            shear_range=0.2,
+            zoom_range=0.1,
          #   horizontal_flip=True,
          #   fill_mode='nearest')
 		)
@@ -117,7 +119,7 @@ for i in range(0, CYCLES):
         attr.validation_data_dir,
         target_size=(attr.img_width, attr.img_height),
         batch_size=attr.batch_size,
-        shuffle=True,
+        shuffle=False,
         color_mode='grayscale',
         class_mode='binary')
 

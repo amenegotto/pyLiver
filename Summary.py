@@ -18,6 +18,7 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
         else:
             f.write('Architecture: From scratch\n')
 
+        f.write('Fusion: ' + execattr.fusion + '\n')
         f.write('Execution Seq: ' + str(execattr.seq) + '\n')
         f.write('Network Type: ' + network_format + '\n')
         f.write('Image Format: ' + image_format + '\n')
@@ -248,4 +249,5 @@ def save_model(execattr: ExecutionAttribute):
     execattr.model.save(execattr.summ_basename + "-model.h5")
 
 def copy_to_s3(execattr: ExecutionAttribute):
-    os.system("aws s3 cp . s3://pyliver-logs/logs/ --recursive --exclude\"*\" --include \"" + execattr.summ_basename + "*\"")
+    src_dir = execattr.summ_basename.split('/')
+    os.system("aws s3 cp "+execattr.summ_basename.replace(src_dir[len(src_dir)-1],"") + " s3://pyliver-logs/logs/ --recursive --exclude \"*\" --include \"*" + src_dir[len(src_dir)-1] + "*\"")
