@@ -26,11 +26,21 @@ class ExecutionAttribute:
         self.init_timestamp = datetime.datetime.now()
         self.csv_path = csv_path
         self.fusion = fusion
+        self.train_samples = 0
+        self.valid_samples = 0
+        self.test_samples = 0
+
 
     def calculate_steps(self):
-        self.steps_train = self.train_generator.n // self.train_generator.batch_size
-        self.steps_valid = self.validation_generator.n // self.validation_generator.batch_size
-        self.steps_test = self.test_generator.samples // self.test_generator.batch_size
+        if self.train_generator is None:
+            self.steps_train = self.train_samples // self.train_generator.batch_size
+            self.steps_valid = self.valid_samples // self.validation_generator.batch_size
+            self.steps_test = self.test_samples // self.test_generator.batch_size
+        else:
+            self.steps_train = self.train_generator.n // self.train_generator.batch_size
+            self.steps_valid = self.validation_generator.n // self.validation_generator.batch_size
+            self.steps_test = self.test_generator.samples // self.test_generator.batch_size
+
 
     def set_dir_names(self):
         self.train_data_dir = self.path + '/train'

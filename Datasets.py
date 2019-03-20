@@ -19,7 +19,15 @@ def get_image(image_path, img_width, img_height):
     return image
 
 
-def load_data(images_path, csv_path, img_width, img_height, show_info: False):
+def load_numpy(numpy_path, array_name):
+    return np.load(numpy_path + '/' + array_name + '.npy')
+
+
+def load_data(numpy_path):
+    return load_numpy(numpy_path, 'images_train'), load_numpy(numpy_path, 'attributes_train'), load_numpy(numpy_path, 'labels_train'), load_numpy(numpy_path, 'images_valid'), load_numpy(numpy_path, 'attributes_valid'), load_numpy(numpy_path, 'labels_valid'), load_numpy(numpy_path, 'images_test'), load_numpy(numpy_path, 'attributes_test'), load_numpy(numpy_path, 'labels_test')
+
+
+def create_data(images_path, csv_path, img_width, img_height, show_info: False):
     images_train = []
     images_valid = []
     images_test = []

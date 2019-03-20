@@ -29,13 +29,22 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
         if execattr.csv_path != "":
             f.write('CSV File: ' + execattr.csv_path + '\n')
         f.write('Train Data Path: ' + execattr.train_data_dir + '\n')
-        f.write('Train Samples: ' + str(len(execattr.train_generator.filenames)) + '\n')
+        if execattr.train_generator is None:
+            f.write('Train Samples: ' + str(execattr.train_samples) + '\n')
+        else:
+            f.write('Train Samples: ' + str(len(execattr.train_generator.filenames)) + '\n')
         f.write('Train Steps: ' + str(execattr.steps_train) + '\n')
         f.write('Validation Data Path: ' + execattr.validation_data_dir + '\n')
-        f.write('Validation Samples: ' + str(len(execattr.validation_generator.filenames)) + '\n')
+        if execattr.validation_generator is None:
+            f.write('Validation Samples: ' + str(execattr.valid_samples) + '\n')
+        else:
+            f.write('Validation Samples: ' + str(len(execattr.validation_generator.filenames)) + '\n')
         f.write('Validation Steps: ' + str(execattr.steps_valid) + '\n')
         f.write('Test Data Path: ' + execattr.test_data_dir + '\n')
-        f.write('Test Samples: ' + str(len(execattr.test_generator.filenames)) + '\n')
+        if execattr.test_generator is None:
+            f.write('Test Samples: ' + str(execattr.test_samples) + '\n')
+        else:
+            f.write('Test Samples: ' + str(len(execattr.test_generator.filenames)) + '\n')
         f.write('Test Steps: ' + str(execattr.steps_test) + '\n')
         f.write('Epochs: ' + str(execattr.epochs) + '\n')
         f.write('Batch Size: ' + str(execattr.batch_size) + '\n')
@@ -247,6 +256,7 @@ def get_base_name(basepath):
 
 def save_model(execattr: ExecutionAttribute):
     execattr.model.save(execattr.summ_basename + "-model.h5")
+
 
 def copy_to_s3(execattr: ExecutionAttribute):
     src_dir = execattr.summ_basename.split('/')

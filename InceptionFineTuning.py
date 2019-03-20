@@ -17,8 +17,8 @@ from keras.utils import plot_model
 
 
 # fix seed for reproducible results (only works on CPU, not GPU)
-seed = 9
-np.random.seed(seed=seed)
+# seed = 9
+# np.random.seed(seed=seed)
 # tf.set_random_seed(seed=seed)
 
 # Summary Information

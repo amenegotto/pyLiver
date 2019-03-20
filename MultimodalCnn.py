@@ -47,6 +47,7 @@ attr.img_width, attr.img_height = 96, 96
 # network parameters
 # attr.path='C:/Users/hp/Downloads/cars_train'
 # attr.path='/home/amenegotto/dataset/2d/sem_pre_proc_mini/
+numpy_path = '/mnt/data/numpy/com_pre_proc/'
 attr.csv_path = 'csv/clinical_data.csv'
 attr.path = '/mnt/data/image/2d/com_pre_proc/'
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
@@ -62,7 +63,7 @@ else:
 
 input_attributes_s = (20,)
 
-images_train, attributes_train, labels_train, images_valid, attributes_valid, labels_valid, images_test, attributes_test, labels_test = load_data(attr.path, attr.csv_path, attr.img_width, attr.img_height, True)
+images_train, attributes_train, labels_train, images_valid, attributes_valid, labels_valid, images_test, attributes_test, labels_test = load_data(numpy_path)
 
 for i in range(0, CYCLES):
 
@@ -109,6 +110,10 @@ for i in range(0, CYCLES):
 
 
     # calculate steps based on number of images and batch size
+    attr.train_samples = len(images_train)
+    attr.valid_samples = len(images_valid)
+    attr.test_samples = len(images_test)
+
     attr.calculate_steps()
 
     attr.increment_seq()
