@@ -1,5 +1,6 @@
 # PURPOSE:
-# unimodal DCNN for hepatocarcinoma computer-aided diagnosis (DRAFT)
+# unimodal DCNN for hepatocarcinoma computer-aided diagnosis
+# with image augmentation
 
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
@@ -17,6 +18,7 @@ import numpy as np
 import os
 from TrainingResume import save_execution_attributes
 from keras.utils import plot_model
+from Datasets import create_image_generator
 
 
 # fix seed for reproducible results (only works on CPU, not GPU)
@@ -104,22 +106,11 @@ for i in range(0, CYCLES):
                  ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
 
     # this is the augmentation configuration we will use for training
-    train_datagen = ImageDataGenerator(
-        #    rotation_range=2,
-            width_shift_range=0.2,
-            height_shift_range=0.2,
-            rescale=1./255,
-            shear_range=0.1,
-            zoom_range=0.1,
-         #   horizontal_flip=True,
-         #   fill_mode='nearest')
-		)
+    train_datagen = create_image_generator(True, True)
 
     # this is the augmentation configuration we will use for testing:
     # only rescaling
-    test_datagen = ImageDataGenerator(
-            rescale=1. / 255
-            )
+    test_datagen = create_image_generator(True, False)
 
     attr.train_generator = train_datagen.flow_from_directory(
         attr.train_data_dir,

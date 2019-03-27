@@ -1,5 +1,6 @@
 # PURPOSE:
 # VGG19 fine tuning for hepatocarcinoma diagnosis through CTs images
+# wigh image augmentation
 
 import os
 import numpy as np
@@ -15,6 +16,7 @@ from TimeCallback import TimeCallback
 from TrainingResume import save_execution_attributes
 import tensorflow as tf
 from keras.utils import plot_model
+from Datasets import create_image_generator
 
 
 # fix seed for reproducible results (only works on CPU, not GPU)
@@ -71,13 +73,9 @@ attr.model.summary()
 plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
 
 # prepare data augmentation configuration
-train_datagen = ImageDataGenerator(
-    rescale=1. / 255,
-    # shear_range=0.1,
-    # zoom_range=0.1,
-    horizontal_flip=False)
+train_datagen = create_image_generator(True, True)
 
-test_datagen = ImageDataGenerator(rescale=1. / 255)
+test_datagen = create_image_generator(True, False)
 
 attr.train_generator = train_datagen.flow_from_directory(
     attr.train_data_dir,

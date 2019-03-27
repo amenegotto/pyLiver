@@ -1,5 +1,6 @@
 # PURPOSE:
 # Xception fine tuning for hepatocarcinoma diagnosis through CTs images
+# with image augmentation
 
 import os
 from keras.layers import *
@@ -13,6 +14,7 @@ from ExecutionAttributes import ExecutionAttribute
 from TimeCallback import TimeCallback
 from TrainingResume import save_execution_attributes
 from keras.utils import plot_model
+from Datasets import create_image_generator
 
 
 # fix seed for reproducible results (only works on CPU, not GPU)
@@ -69,17 +71,9 @@ for layer in base_model.layers:
 
 # Read Data and Augment it: Make sure to select augmentations that are appropriate to your images.
 # To save augmentations un-comment save lines and add to your flow parameters.
-train_datagen = ImageDataGenerator(
-                                   rescale=1. / 255,
-                                   #rotation_range=transformation_ratio,
-                                   #shear_range=transformation_ratio,
-                                   #zoom_range=transformation_ratio,
-                                   #cval=transformation_ratio
-                                   )
+train_datagen = create_image_generator(True, True)
 
-test_datagen = ImageDataGenerator(
-        rescale=1. / 255
-        )
+test_datagen = create_image_generator(True, False)
 
 attr.train_generator = train_datagen.flow_from_directory(attr.train_data_dir,
                                                     target_size=(attr.img_width, attr.img_height),

@@ -1,5 +1,6 @@
 # PURPOSE:
-# multimodal DCNN for hepatocarcinoma computer-aided diagnosis (DRAFT)
+# multimodal DCNN for hepatocarcinoma computer-aided diagnosis
+# with image augmentation  (DRAFT)
 
 from keras.utils import plot_model
 from keras.layers import Conv2D, MaxPooling2D, Input, concatenate
@@ -16,19 +17,19 @@ from TrainingResume import save_execution_attributes
 import os
 import numpy as np
 import tensorflow as tf
-from Datasets import load_data
+from Datasets import load_data, create_image_generator, multimodal_generator_two_inputs
 
 
 # os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin'
 
 # fix seed for reproducible results (only works on CPU, not GPU)
-#seed = 9
-#np.random.seed(seed=seed)
-#tf.set_random_seed(seed=seed)
+# seed = 9
+# np.random.seed(seed=seed)
+# tf.set_random_seed(seed=seed)
 
 # Summary Information
-SUMMARY_PATH = "/mnt/data/results"
-# SUMMARY_PATH="c:/temp/results"
+# SUMMARY_PATH = "/mnt/data/results"
+SUMMARY_PATH="c:/temp/results"
 # SUMMARY_PATH="/tmp/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
@@ -49,12 +50,12 @@ attr.img_width, attr.img_height = 96, 96
 # attr.path='/home/amenegotto/dataset/2d/sem_pre_proc_mini/
 numpy_path = '/mnt/data/numpy/com_pre_proc/'
 attr.csv_path = 'csv/clinical_data.csv'
-attr.path = '/mnt/data/image/2d/com_pre_proc/'
+# attr.path = '/mnt/data/image/2d/com_pre_proc/'
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
 attr.epochs = 200
 attr.batch_size = 32
 attr.set_dir_names()
-attr.fusion = "Mid-Fusion"
+attr.fusion = "Intermediate Fusion"
 
 if K.image_data_format() == 'channels_first':
     input_image_s = (1, attr.img_width, attr.img_height)
@@ -63,7 +64,12 @@ else:
 
 input_attributes_s = (20,)
 
-images_train, attributes_train, labels_train, images_valid, attributes_valid, labels_valid, images_test, attributes_test, labels_test = load_data(numpy_path)
+images_train, fnames_train, attributes_train, labels_train, \
+    images_valid, fnames_valid, attributes_valid, labels_valid, \
+    images_test, fnames_test, attributes_test, labels_test = load_data(numpy_path)
+
+attr.fnames_test = fnames_test
+attr.labels_test = labels_test
 
 for i in range(0, CYCLES):
 
@@ -82,7 +88,7 @@ for i in range(0, CYCLES):
     pool1 = MaxPooling2D(pool_size=(2, 2))(drop2)
     flat = Flatten()(pool1)
 
-    # auxiliary input
+    # auxiliary input (intermediary fusion)
     attributes_input = Input(shape=input_attributes_s)
     concat = concatenate([flat, attributes_input])
 
@@ -121,12 +127,23 @@ for i in range(0, CYCLES):
     # Persist execution attributes for session resume
     save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.properties')
 
+    # this is the augmentation configuration we will use for training
+    train_datagen = create_image_generator(False, True)
+
+    # this is the augmentation configuration we will use for testing:
+    # nothing is done.
+    test_datagen = create_image_generator(False, False)
+
+    attr.train_generator = multimodal_generator_two_inputs(images_train, attributes_train, labels_train)
+    attr.validation_generator = multimodal_generator_two_inputs(images_valid, attributes_valid, labels_valid)
+    attr.test_generator = multimodal_generator_two_inputs(images_test, attributes_test, labels_test)
+
     # training time
-    history = attr.model.fit(
-        [images_train, attributes_train], labels_train,
-        validation_data=([images_valid, attributes_valid], labels_valid),
+    history = attr.model.fit_generator(
+        attr.train_generator,
         steps_per_epoch=attr.steps_train,
         epochs=attr.epochs,
+        validation_data=attr.validation_generator,
         validation_steps=attr.steps_valid,
         use_multiprocessing=True,
         callbacks=callbacks)

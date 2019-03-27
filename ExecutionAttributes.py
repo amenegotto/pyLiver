@@ -3,7 +3,7 @@ import datetime
 
 class ExecutionAttribute:
 
-    def __init__(self, summ_basename="", img_width=0, img_height=0, path="", epochs=0, batch_size=0, train_generator=None, validation_generator=None, test_generator=None, model=None, seq=0, architecture = "", csv_path = "", fusion = "None"):
+    def __init__(self, summ_basename="", img_width=0, img_height=0, path="", epochs=0, batch_size=0, train_generator=None, validation_generator=None, test_generator=None, model=None, seq=0, architecture="", csv_path="", fusion="None", fnames_test=None, labels_test=None):
         self.img_width = img_width
         self.img_height = img_height
         self.path = path
@@ -29,6 +29,8 @@ class ExecutionAttribute:
         self.train_samples = 0
         self.valid_samples = 0
         self.test_samples = 0
+        self.fnames_test = fnames_test
+        self.labels_test = labels_test
 
 
     def calculate_steps(self):

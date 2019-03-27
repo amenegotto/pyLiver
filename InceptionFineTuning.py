@@ -1,5 +1,6 @@
 # PURPOSE:
 # InceptionV3 fine tuning for hepatocarcinoma diagnosis through CTs images
+# with image augmentation
 
 import os
 from keras.applications.inception_v3 import InceptionV3
@@ -14,6 +15,7 @@ from ExecutionAttributes import ExecutionAttribute
 from TimeCallback import TimeCallback
 from TrainingResume import save_execution_attributes
 from keras.utils import plot_model
+from Datasets import create_image_generator
 
 
 # fix seed for reproducible results (only works on CPU, not GPU)
@@ -65,15 +67,9 @@ for layer in base_model.layers:
 attr.model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'], )
 
 # prepare data augmentation configuration
-train_datagen = ImageDataGenerator(
-    rescale=1. / 255,
-#    shear_range=0.1,
-#    zoom_range=0.1,
-    horizontal_flip=False)
+train_datagen = create_image_generator(True, True)
 
-test_datagen = ImageDataGenerator(
-        rescale=1. / 255
-        )
+test_datagen = create_image_generator(True, False)
 
 attr.train_generator = train_datagen.flow_from_directory(
     attr.train_data_dir,

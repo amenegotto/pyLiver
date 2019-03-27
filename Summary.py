@@ -26,31 +26,40 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
         f.write('Date: ' + datetime.now().strftime("%Y%m%d") + '\n')
         f.write('Cycle Started at: ' + execattr.init_timestamp.strftime("%Y%m%d-%H%M%S") + '\n')
         f.write('Cycle Finished at: ' + datetime.now().strftime("%Y%m%d-%H%M%S") + '\n')
+
         if execattr.csv_path != "":
             f.write('CSV File: ' + execattr.csv_path + '\n')
-        f.write('Train Data Path: ' + execattr.train_data_dir + '\n')
-        if execattr.train_generator is None:
+
+        if execattr.fusion != "None":
             f.write('Train Samples: ' + str(execattr.train_samples) + '\n')
         else:
+            f.write('Train Data Path: ' + execattr.train_data_dir + '\n')
             f.write('Train Samples: ' + str(len(execattr.train_generator.filenames)) + '\n')
         f.write('Train Steps: ' + str(execattr.steps_train) + '\n')
-        f.write('Validation Data Path: ' + execattr.validation_data_dir + '\n')
-        if execattr.validation_generator is None:
+
+        if execattr.fusion != "None":
             f.write('Validation Samples: ' + str(execattr.valid_samples) + '\n')
         else:
+            f.write('Validation Data Path: ' + execattr.validation_data_dir + '\n')
             f.write('Validation Samples: ' + str(len(execattr.validation_generator.filenames)) + '\n')
         f.write('Validation Steps: ' + str(execattr.steps_valid) + '\n')
-        f.write('Test Data Path: ' + execattr.test_data_dir + '\n')
-        if execattr.test_generator is None:
+
+        if execattr.fusion != "None":
             f.write('Test Samples: ' + str(execattr.test_samples) + '\n')
         else:
+            f.write('Test Data Path: ' + execattr.test_data_dir + '\n')
             f.write('Test Samples: ' + str(len(execattr.test_generator.filenames)) + '\n')
+
         f.write('Test Steps: ' + str(execattr.steps_test) + '\n')
         f.write('Epochs: ' + str(execattr.epochs) + '\n')
         f.write('Batch Size: ' + str(execattr.batch_size) + '\n')
         f.write('Learning Rate: ' + str(K.eval(execattr.model.optimizer.lr)) + '\n')
 
-        filenames = execattr.test_generator.filenames
+        if execattr.fnames_test is None:
+            filenames = execattr.test_generator.filenames
+        else:
+            filenames = execattr.fnames_test
+
         nb_samples = len(filenames)
 
         print(filenames)
@@ -60,7 +69,7 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
         f.write("\nNumber of Test Samples:\n")
         f.write(str(nb_samples) + "\n\n")
 
-        score_gen = execattr.model.evaluate_generator(generator=execattr.test_generator, steps=execattr.steps_test,verbose=1)
+        score_gen = execattr.model.evaluate_generator(generator=execattr.test_generator, steps=execattr.steps_test, verbose=1)
 
         print(score)
         print('Test Loss:', score_gen[0])
@@ -75,23 +84,31 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
         print(time_callback.times, file=f)
 
         # Confusion Matrix and Classification Report
-        execattr.test_generator.reset()
+        if execattr.fusion != "None":
+            execattr.test_generator.reset()
+
         if execattr.architecture != "":
             Y_pred = execattr.model.predict_generator(execattr.test_generator, steps=execattr.steps_test, verbose=1)
             y_pred = np.argmax(Y_pred, axis=1)
 
             print(Y_pred)
             print(y_pred)
-            print(execattr.test_generator.classes)
+
+            if execattr.fusion != "None":
+                classes = execattr.labels_test
+            else:
+                classes = execattr.test_generator.classes
+
+            print(classes)
 
             f.write('Predicted Values: \n')
             print(Y_pred, file=f)
             f.write('\nRounded Values: \n')
             print(y_pred, file=f)
             f.write('\nClasses: \n')
-            print(execattr.test_generator.classes, file=f)
+            print(classes, file=f)
 
-            mtx = confusion_matrix(execattr.test_generator.classes, y_pred)
+            mtx = confusion_matrix(classes, y_pred)
             print('Confusion Matrix:')
             print(mtx)
             f.write('\n\nConfusion Matrix:\n')
@@ -103,26 +120,29 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
             plt.savefig(execattr.curr_basename + '-confusion_matrix.png')
             plt.clf()
 
-            # print('Classification Report')
-            target_names = list(execattr.test_generator.class_indices.keys())
-            print(classification_report(execattr.test_generator.classes, y_pred, target_names=target_names))
-            print(classification_report(execattr.test_generator.classes, y_pred, target_names=target_names), file=f)
+            print('Classification Report')
+            print('Classification Report:', file=f)
+            if execattr.fusion != "None":
+                target_names = labels
+            else:
+                target_names = list(execattr.test_generator.class_indices.keys())
+            print(classification_report(classes, y_pred, target_names=target_names))
+            print(classification_report(classes, y_pred, target_names=target_names), file=f)
 
-            cohen_score = cohen_kappa_score(execattr.test_generator.classes, y_pred)
+            cohen_score = cohen_kappa_score(classes, y_pred)
             print("Kappa Score = " + str(cohen_score))
             f.write("Kappa Score = " + str(cohen_score))
 
-            auc_score = roc_auc_score(execattr.test_generator.classes, y_pred)
+            auc_score = roc_auc_score(classes, y_pred)
             print("ROC AUC Score = " + str(auc_score))
             f.write("\n\nROC AUC Score = " + str(auc_score))
 
             # plot the roc curve for the model
-            fpr, tpr, thresholds = roc_curve(execattr.test_generator.classes, y_pred)
+            fpr, tpr, thresholds = roc_curve(classes, y_pred)
             plt.plot([0, 1], [0, 1], linestyle='--')
             plt.plot(fpr, tpr, marker='.')
             plt.savefig(execattr.curr_basename + '-roc-curve.png')
             plt.clf()
-
 
         else:    
             Y_pred = execattr.model.predict_generator(execattr.test_generator, steps=execattr.steps_test, verbose=1)
@@ -130,16 +150,22 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
 
             print(Y_pred)
             print(y_pred)
-            print(execattr.test_generator.classes)
+
+            if execattr.fusion != "None":
+                classes = execattr.labels_test
+            else:
+                classes = execattr.test_generator.classes
+
+            print(classes)
 
             f.write('Predicted Values: \n')
             print(Y_pred, file=f)
             f.write('\nRounded Values: \n')
             print(y_pred, file=f)
             f.write('\nClasses: \n')
-            print(execattr.test_generator.classes, file=f)
+            print(classes, file=f)
 
-            mtx = confusion_matrix(execattr.test_generator.classes, y_pred, labels=[1, 0])
+            mtx = confusion_matrix(classes, y_pred, labels=[1, 0])
             print('Confusion Matrix:')
             print(mtx)
             f.write('\n\nConfusion Matrix:\n')
@@ -153,19 +179,19 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
 
             # print('Classification Report')
             target_names = labels
-            print(classification_report(execattr.test_generator.classes, y_pred, target_names=target_names))
-            print(classification_report(execattr.test_generator.classes, y_pred, target_names=target_names), file=f)
+            print(classification_report(classes, y_pred, target_names=target_names))
+            print(classification_report(classes, y_pred, target_names=target_names), file=f)
 
-            cohen_score = cohen_kappa_score(execattr.test_generator.classes, y_pred)
+            cohen_score = cohen_kappa_score(classes, y_pred)
             print("Kappa Score = " + str(cohen_score))
             f.write("Kappa Score = " + str(cohen_score))
 
-            auc_score = roc_auc_score(execattr.test_generator.classes, y_pred)
+            auc_score = roc_auc_score(classes, y_pred)
             print("ROC AUC Score = " + str(auc_score))
             f.write("\n\nROC AUC Score = " + str(auc_score))
 
             # plot the roc curve for the model
-            fpr, tpr, thresholds = roc_curve(execattr.test_generator.classes, y_pred)
+            fpr, tpr, thresholds = roc_curve(classes, y_pred)
             plt.plot([0, 1], [0, 1], linestyle='--')
             plt.plot(fpr, tpr, marker='.')
             plt.savefig(execattr.curr_basename + '-roc-curve.png')
@@ -173,7 +199,7 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
 
         f.close()
 
-    write_csv_test_result(execattr, score_gen, y_pred, mtx)
+    write_csv_test_result(execattr, score_gen, y_pred, mtx, classes)
 
 
 def plot_train_stats(history, filename_loss, filename_accuracy):
@@ -223,12 +249,12 @@ def plot_train_stats(history, filename_loss, filename_accuracy):
     plt.clf()
 
 
-def write_csv_test_result(execattr: ExecutionAttribute, score_gen, y_pred, mtx):
+def write_csv_test_result(execattr: ExecutionAttribute, score_gen, y_pred, mtx, classes):
     with open(execattr.summ_basename + ".csv", "a") as csv:
         if execattr.seq == 1:
             csv.write('Test Loss, Test Accuracy, TP, FP, TN, FN, Precision, Recall, F-Score, Support\n')
 
-        precision, recall, fscore, support = score(execattr.test_generator.classes, y_pred, average='macro')
+        precision, recall, fscore, support = score(classes, y_pred, average='macro')
 
         csv.write(str(score_gen[0]) + ',' + str(score_gen[1]) + ',' + str(mtx[0, 0]) + ',' + str(mtx[1, 0]) + ',' + str(
             mtx[1, 1]) + ',' + str(mtx[0, 1]) + ',' + str(precision) + ',' + str(recall) + ',' + str(
