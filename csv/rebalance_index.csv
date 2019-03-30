@@ -1,0 +1,5 @@
+Study,Total,Train,Validation,Test,Class
+cptac-pda,8247,5772,1649,826,nok
+tcga-lihc,20792,14552,4158,2082,ok
+tcga-stad,10969,7680,2193,1096,nok
+tcga-kirp,1576,1100,316,160,nok
