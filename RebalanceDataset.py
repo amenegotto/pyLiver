@@ -26,8 +26,8 @@ def move_to_garbage(i, fname):
     fpath_src = BASE_IMG_PATH + DATASETS_PATHS[i] + NOK_PATH + '/' + fname
     fpath_dst = BASE_GARBAGE_PATH + DATASETS_PATHS[i] + '/' + fname
     if str(os.path.isfile(fpath_src)):
-        print('move ' + fpath_src + '=>' + fpath_dst)
-        #os.rename(fpath_src, fpath_dst)
+        #print('move ' + fpath_src + '=>' + fpath_dst)
+        os.rename(fpath_src, fpath_dst)
 
 
 def rebalance(study_name, dataset_name, limit, i):

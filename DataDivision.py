@@ -6,11 +6,9 @@ from shutil import copyfile
 # Reproduce in the filesystem the dataset division (train, validation and test) done in a CSV file
 # Don't forget to adjust the CSV header accordingly
 
-#CSV_FILE="/home/amenegotto/Downloads/slices-id.csv"
-CSV_FILE="C:/Users/hp/dataset/images/2d/slices-id.csv"
-#DST_BASEPATH = "/tmp/"
-DST_BASEPATH = "C:/Users/hp/dataset/images/2d"
-
+CSV_FILE="csv/sem_pre_proc_slices_id.csv"
+DST_BASEPATH = "/mnt/data/image/2d/sem_pre_proc"
+SRC_DIR = "/mnt/data/image/2d/src"
 TRAIN_DIR = "/train"
 VALID_DIR = "/valid"
 TEST_DIR = "/test"
@@ -33,8 +31,11 @@ df = pd.read_csv(CSV_FILE)
 for row in df.itertuples():
     print(row)
 
-    src_fname = row.base_path + '/' + row.png_fname
-    
+    if SRC_DIR != "":
+	src_fname = SRC_DIR + '/' + row.png_fname
+    else:
+    	src_fname = row.base_path + '/' + row.png_fname
+
     dst_fname = DST_BASEPATH
 
     if row.dataset == 'TREIN':
