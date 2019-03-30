@@ -30,7 +30,7 @@ def load_data(numpy_path):
     return load_numpy(numpy_path, 'images_train'), load_numpy(numpy_path, 'fnames_train'), load_numpy(numpy_path, 'attributes_train'), load_numpy(numpy_path, 'labels_train'), load_numpy(numpy_path, 'images_valid'), load_numpy(numpy_path, 'fnames_valid'), load_numpy(numpy_path, 'attributes_valid'), load_numpy(numpy_path, 'labels_valid'), load_numpy(numpy_path, 'images_test'), load_numpy(numpy_path, 'fnames_test'), load_numpy(numpy_path, 'attributes_test'), load_numpy(numpy_path, 'labels_test')
 
 
-def create_data(images_path, csv_path, img_width, img_height, show_info: False):
+def create_data(images_path, csv_path, img_width, img_height, show_info: False, npy_path):
     fnames_train = []
     fnames_valid = []
     fnames_test = []
@@ -100,30 +100,43 @@ def create_data(images_path, csv_path, img_width, img_height, show_info: False):
                         labels_test.append(0)
                         fnames_test.append(relative_path)
 
-    images_train = (np.array(images_train, dtype="float") / 255.0)
-    attributes_train = np.array(attributes_train)
-    labels_train = np.array(labels_train)
-    fnames_train = np.array(fnames_train)
-    images_valid = (np.array(images_valid, dtype="float") / 255.0)
-    attributes_valid = np.array(attributes_valid)
-    labels_valid = np.array(labels_valid)
-    fnames_valid = np.array(fnames_valid)
-    images_test = (np.array(images_test, dtype="float") / 255.0)
-    attributes_test = np.array(attributes_test)
-    labels_test = np.array(labels_test)
-    fnames_test = np.array(fnames_test)
+    np_images_train = (np.array(images_train, dtype="float") / 255.0)
+    np_attributes_train = np.array(attributes_train)
+    np_labels_train = np.array(labels_train)
+    np_fnames_train = np.array(fnames_train)
+    np_images_valid = (np.array(images_valid, dtype="float") / 255.0)
+    np_attributes_valid = np.array(attributes_valid)
+    np_labels_valid = np.array(labels_valid)
+    np_fnames_valid = np.array(fnames_valid)
+    np_images_test = (np.array(images_test, dtype="float") / 255.0)
+    np_attributes_test = np.array(attributes_test)
+    np_labels_test = np.array(labels_test)
+    np_fnames_test = np.array(fnames_test)
+
+    np.save(npy_path + 'images_train.npy', np_images_train)
+    np.save(npy_path + 'fnames_train.npy', np_fnames_train)
+    np.save(npy_path + 'attributes_train.npy', np_attributes_train)
+    np.save(npy_path + 'labels_train.npy', np_labels_train)
+    np.save(npy_path + 'images_valid.npy', np_images_valid)
+    np.save(npy_path + 'fnames_valid.npy', np_fnames_valid)
+    np.save(npy_path + 'attributes_valid.npy', np_attributes_valid)
+    np.save(npy_path + 'labels_valid.npy', np_labels_valid)
+    np.save(npy_path + 'images_test.npy', np_images_test)
+    np.save(npy_path + 'fnames_test.npy', np_fnames_test)
+    np.save(npy_path + 'attributes_test.npy', np_attributes_test)
+    np.save(npy_path + 'labels_test.npy', np_labels_test)
 
     if show_info:
         print("------------------------------------------")
-        print("[INFO] Training image count: {:.2f}".format(len(images_train)))
-        print("[INFO] Validation image count: {:.2f}".format(len(images_valid)))
-        print("[INFO] Testing image count: {:.2f}".format(len(images_test)))
-        print("[INFO] Training image size: {:.2f}MB".format(images_train.nbytes / (1024 * 1000.0)))
-        print("[INFO] Validation image size: {:.2f}MB".format(images_valid.nbytes / (1024 * 1000.0)))
-        print("[INFO] Testing image size: {:.2f}MB".format(images_test.nbytes / (1024 * 1000.0)))
+        print("[INFO] Training image count: {:.2f}".format(len(np_images_train)))
+        print("[INFO] Validation image count: {:.2f}".format(len(np_images_valid)))
+        print("[INFO] Testing image count: {:.2f}".format(len(np_images_test)))
+        print("[INFO] Training image size: {:.2f}MB".format(np_images_train.nbytes / (1024 * 1000.0)))
+        print("[INFO] Validation image size: {:.2f}MB".format(np_images_valid.nbytes / (1024 * 1000.0)))
+        print("[INFO] Testing image size: {:.2f}MB".format(np_images_test.nbytes / (1024 * 1000.0)))
         print("------------------------------------------")
 
-    return images_train, fnames_train, attributes_train, labels_train, images_valid, fnames_valid, attributes_valid, labels_valid, images_test, fnames_test, attributes_test, labels_test
+    print("Done!")
 
 
 def show_images(images, cols=1, titles=None):
