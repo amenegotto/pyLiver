@@ -16,7 +16,7 @@ attr.img_width, attr.img_height = 96, 96
 attr.csv_path = 'csv/clinical_data.csv'
 
 image_type = 'com_pre_proc/'
-npy_path = '/mnt/data/numpy/' + image_type
+npy_path = '/mnt/data/image/2d/numpy/' + image_type
 attr.path = '/mnt/data/image/2d/' + image_type
 
 attr.set_dir_names()
