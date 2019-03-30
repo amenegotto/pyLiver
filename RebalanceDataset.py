@@ -6,9 +6,9 @@ import pandas as pd
 import os
 
 REBALANCE_INDEX_PATH='csv/rebalance_index.csv'
-SLICES_ID_PATH='csv/slices_id.csv'
-BASE_IMG_PATH='/home/amenegotto/dataset/2d/com_pre_proc'
-BASE_GARBAGE_PATH='/tmp/garbage/com_pre_proc'
+SLICES_ID_PATH='csv/sem_pre_proc_slices_id.csv'
+BASE_IMG_PATH='/mnt/data/image/2d/sem_pre_proc'
+BASE_GARBAGE_PATH='/mnt/data/image/2d/garbage/sem_pre_proc'
 NOK_PATH='/nok'
 OK_PATH='/ok'
 DATASETS_NAMES = [ 'TREIN', 'VALIDA', 'TESTE']
