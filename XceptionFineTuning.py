@@ -37,7 +37,7 @@ attr.summ_basename = get_base_name(results_path)
 attr.path = '/mnt/data/image/2d/com_pre_proc'
 attr.set_dir_names()
 attr.batch_size = 64  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
-attr.epochs = 32
+attr.epochs = 1
 
 # hyper parameters for model
 nb_classes = 2  # number of classes
@@ -45,7 +45,6 @@ based_model_last_block_layer_number = 126  # value is based on based model selec
 attr.img_width, attr.img_height = 299, 299  # change based on the shape/structure of your images
 learn_rate = 1e-4  # sgd learning rate
 momentum = .9  # sgd momentum to avoid local minimum
-transformation_ratio = .05  # how aggressive will be the data augmentation/transformation
 
 # Pre-Trained CNN Model using imagenet dataset for pre-trained weights
 base_model = Xception(input_shape=(attr.img_width, attr.img_height, 3), weights='imagenet', include_top=False)
@@ -191,7 +190,7 @@ with open(attr.summ_basename + "-predicts.txt", "a") as f:
     print(res)
     f.close()
 
-write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback)
+write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks_list[2].stopped_epoch)
 
 copy_to_s3(attr)
 # os.system("sudo poweroff")

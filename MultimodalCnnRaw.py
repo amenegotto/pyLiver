@@ -28,8 +28,8 @@ from Datasets import load_data
 # tf.set_random_seed(seed=seed)
 
 # Summary Information
-# SUMMARY_PATH = "/mnt/data/results"
-SUMMARY_PATH="c:/temp/results"
+SUMMARY_PATH = "/mnt/data/results"
+#SUMMARY_PATH="c:/temp/results"
 # SUMMARY_PATH="/tmp/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
@@ -48,19 +48,19 @@ attr.img_width, attr.img_height = 96, 96
 # network parameters
 # attr.path='C:/Users/hp/Downloads/cars_train'
 # attr.path='/home/amenegotto/dataset/2d/sem_pre_proc_mini/
-numpy_path = '/mnt/data/numpy/com_pre_proc/'
+numpy_path = '/mnt/data/image/2d/numpy/com_pre_proc/'
 attr.csv_path = 'csv/clinical_data.csv'
 # attr.path = '/mnt/data/image/2d/com_pre_proc/'
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 200
+attr.epochs = 1
 attr.batch_size = 32
 attr.set_dir_names()
 attr.fusion = "Intermediate Fusion"
 
 if K.image_data_format() == 'channels_first':
-    input_image_s = (1, attr.img_width, attr.img_height)
+    input_image_s = (3, attr.img_width, attr.img_height)
 else:
-    input_image_s = (attr.img_width, attr.img_height, 1)
+    input_image_s = (attr.img_width, attr.img_height, 3)
 
 input_attributes_s = (20,)
 
@@ -134,7 +134,6 @@ for i in range(0, CYCLES):
         steps_per_epoch=attr.steps_train,
         epochs=attr.epochs,
         validation_steps=attr.steps_valid,
-        use_multiprocessing=True,
         callbacks=callbacks)
 
     # plot loss and accuracy
@@ -150,7 +149,7 @@ for i in range(0, CYCLES):
     os.remove(attr.summ_basename + "-ckweights.h5")
 
     # create confusion matrix and report with accuracy, precision, recall, f-score
-    write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback)
+    write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks[1].stopped_epoch)
 
     K.clear_session()
 

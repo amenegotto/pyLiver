@@ -38,7 +38,7 @@ attr.summ_basename = get_base_name(results_path)
 attr.path = '/mnt/data/image/2d/com_pre_proc'
 attr.set_dir_names()
 attr.batch_size = 64  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
-attr.epochs = 32
+attr.epochs = 1
 
 # create the base pre-trained model
 base_model = InceptionV3(weights='imagenet', include_top=False)
@@ -179,6 +179,6 @@ with open(attr.summ_basename + "-predicts.txt", "a") as f:
     print(res)
     f.close()
 
-write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback)
+write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks_list[2].stopped_epoch)
 
 copy_to_s3(attr)

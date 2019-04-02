@@ -49,7 +49,7 @@ attr.img_width, attr.img_height = 96, 96
 # attr.path='/home/amenegotto/dataset/2d/sem_pre_proc_mini/
 attr.path = '/mnt/data/image/2d/com_pre_proc/'
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 200
+attr.epochs = 1 
 attr.batch_size = 32
 attr.set_dir_names()
 
@@ -78,7 +78,7 @@ for i in range(0, CYCLES):
     attr.model.add(Dense(256, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
     attr.model.add(Activation('relu'))
     attr.model.add(Dropout(0.40))
-    aattr.model.add(Dense(1))
+    attr.model.add(Dense(1))
     attr.model.add(Activation('sigmoid'))
 
     # compile model using accuracy as main metric, rmsprop (gradient descendent)
@@ -155,7 +155,7 @@ for i in range(0, CYCLES):
     os.remove(attr.summ_basename + "-ckweights.h5")
 
     # create confusion matrix and report with accuracy, precision, recall, f-score
-    write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback)
+    write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks[1].stopped_epoch)
 
     K.clear_session()
 

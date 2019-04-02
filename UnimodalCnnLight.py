@@ -167,7 +167,7 @@ for i in range(0, CYCLES):
     os.remove(attr.summ_basename + "-ckweights.h5")
 
     # create confusion matrix and report with accuracy, precision, recall, f-score
-    write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback)
+    write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks[1].stopped_epoch)
 
     K.clear_session()
 

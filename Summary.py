@@ -9,7 +9,7 @@ from keras import backend as K
 import os
 
 
-def write_summary_txt(execattr : ExecutionAttribute, network_format, image_format, labels, time_callback: TimeCallback):
+def write_summary_txt(execattr : ExecutionAttribute, network_format, image_format, labels, time_callback: TimeCallback, stopped_epoch):
     with open(execattr.curr_basename + ".txt", "a") as f:
         f.write('EXECUTION SUMMARY\n')
         f.write('-----------------\n\n')
@@ -26,7 +26,7 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
         f.write('Date: ' + datetime.now().strftime("%Y%m%d") + '\n')
         f.write('Cycle Started at: ' + execattr.init_timestamp.strftime("%Y%m%d-%H%M%S") + '\n')
         f.write('Cycle Finished at: ' + datetime.now().strftime("%Y%m%d-%H%M%S") + '\n')
-
+        
         if execattr.csv_path != "":
             f.write('CSV File: ' + execattr.csv_path + '\n')
 
@@ -52,6 +52,11 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
 
         f.write('Test Steps: ' + str(execattr.steps_test) + '\n')
         f.write('Epochs: ' + str(execattr.epochs) + '\n')
+        if stopped_epoch == 0:
+            f.write('Stopped Epoch: ' + str(execattr.epochs) + '\n')
+        else:
+            f.write('Stopped Epoch: ' + str(stopped_epoch) + '\n')
+
         f.write('Batch Size: ' + str(execattr.batch_size) + '\n')
         f.write('Learning Rate: ' + str(K.eval(execattr.model.optimizer.lr)) + '\n')
 
@@ -199,7 +204,7 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
 
         f.close()
 
-    write_csv_test_result(execattr, score_gen, y_pred, mtx, classes)
+    write_csv_test_result(execattr, score_gen, y_pred, mtx, classes, stopped_epoch)
 
 
 def plot_train_stats(history, filename_loss, filename_accuracy):
@@ -249,16 +254,16 @@ def plot_train_stats(history, filename_loss, filename_accuracy):
     plt.clf()
 
 
-def write_csv_test_result(execattr: ExecutionAttribute, score_gen, y_pred, mtx, classes):
+def write_csv_test_result(execattr: ExecutionAttribute, score_gen, y_pred, mtx, classes, stopped_epoch):
     with open(execattr.summ_basename + ".csv", "a") as csv:
         if execattr.seq == 1:
-            csv.write('Test Loss, Test Accuracy, TP, FP, TN, FN, Precision, Recall, F-Score, Support\n')
+            csv.write('Test Loss, Test Accuracy, TP, FP, TN, FN, Precision, Recall, F-Score, Support, Stopped Epoch\n')
 
         precision, recall, fscore, support = score(classes, y_pred, average='macro')
 
         csv.write(str(score_gen[0]) + ',' + str(score_gen[1]) + ',' + str(mtx[0, 0]) + ',' + str(mtx[1, 0]) + ',' + str(
             mtx[1, 1]) + ',' + str(mtx[0, 1]) + ',' + str(precision) + ',' + str(recall) + ',' + str(
-            fscore) + ',' + str(support) + '\n')
+            fscore) + ',' + str(support) + ',' + str(stopped_epoch) + '\n')
 
         csv.close()
 

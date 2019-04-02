@@ -35,9 +35,9 @@ class ExecutionAttribute:
 
     def calculate_steps(self):
         if self.train_generator is None:
-            self.steps_train = self.train_samples // self.train_generator.batch_size
-            self.steps_valid = self.valid_samples // self.validation_generator.batch_size
-            self.steps_test = self.test_samples // self.test_generator.batch_size
+            self.steps_train = self.train_samples // self.batch_size
+            self.steps_valid = self.valid_samples // self.batch_size
+            self.steps_test = self.test_samples // 1 
         else:
             self.steps_train = self.train_generator.n // self.train_generator.batch_size
             self.steps_valid = self.validation_generator.n // self.validation_generator.batch_size

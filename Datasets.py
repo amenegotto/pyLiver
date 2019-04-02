@@ -23,6 +23,7 @@ def get_image(image_path, img_width, img_height):
 
 
 def load_numpy(numpy_path, array_name):
+    print('[INFO] Loading ' + array_name)
     return np.load(numpy_path + '/' + array_name + '.npy')
 
 

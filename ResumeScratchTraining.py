@@ -113,6 +113,6 @@ for i in range(0, CYCLES):
     save_model(attr)
 
     # create confusion matrix and report with accuracy, precision, recall, f-score
-    write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback)
+    write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks[1].stopped_epoch)
 
 copy_to_s3(attr)
