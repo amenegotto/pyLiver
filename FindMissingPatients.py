@@ -15,7 +15,8 @@ def get_patient_info(patient_id, clinical_data):
 missing = []
 clinical_data = pd.read_csv('csv/clinical_data.csv')
 
-images_path='/home/amenegotto/dataset/2d/com_pre_proc/'
+# images_path='/home/amenegotto/dataset/2d/com_pre_proc/'
+images_path='/mnt/data/image/2d/sem_pre_proc/'
 print("[INFO] Patients Count: " + str(len(clinical_data)))
 
 print("[INFO] Loading images from " + images_path)
