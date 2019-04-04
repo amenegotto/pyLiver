@@ -71,33 +71,33 @@ def create_data(images_path, csv_path, img_width, img_height, show_info: False, 
                 if img_info[1] == "ok":
                     if img_info[0] == "train":
                         images_train.append(get_image(absolute_path, img_width, img_height))
-                        attributes_train.append(patient_data.values)
+                        attributes_train.append(patient_data.values.ravel())
                         labels_train.append(1)
                         fnames_train.append(relative_path)
                     elif img_info[0] == "valid":
                         images_valid.append(get_image(absolute_path, img_width, img_height))
-                        attributes_valid.append(patient_data.values)
+                        attributes_valid.append(patient_data.values.ravel())
                         labels_valid.append(1)
                         fnames_valid.append(relative_path)
                     elif img_info[0] == "test":
                         images_test.append(get_image(absolute_path, img_width, img_height))
-                        attributes_test.append(patient_data.values)
+                        attributes_test.append(patient_data.values.ravel())
                         labels_test.append(1)
                         fnames_test.append(relative_path)
                 elif img_info[1] == "nok":
                     if img_info[0] == "train":
                         images_train.append(get_image(absolute_path, img_width, img_height))
-                        attributes_train.append(patient_data.values)
+                        attributes_train.append(patient_data.values.ravel())
                         labels_train.append(0)
                         fnames_train.append(relative_path)
                     elif img_info[0] == "valid":
                         images_valid.append(get_image(absolute_path, img_width, img_height))
-                        attributes_valid.append(patient_data.values)
+                        attributes_valid.append(patient_data.values.ravel())
                         labels_valid.append(0)
                         fnames_valid.append(relative_path)
                     elif img_info[0] == "test":
                         images_test.append(get_image(absolute_path, img_width, img_height))
-                        attributes_test.append(patient_data.values)
+                        attributes_test.append(patient_data.values.ravel())
                         labels_test.append(0)
                         fnames_test.append(relative_path)
 

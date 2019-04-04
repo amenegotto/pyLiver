@@ -48,7 +48,7 @@ attr.img_width, attr.img_height = 96, 96
 # network parameters
 # attr.path='C:/Users/hp/Downloads/cars_train'
 # attr.path='/home/amenegotto/dataset/2d/sem_pre_proc_mini/
-numpy_path = '/mnt/data/image/2d/numpy/com_pre_proc/'
+numpy_path = '/mnt/data/image/2d/numpy/sem_pre_proc/'
 attr.csv_path = 'csv/clinical_data.csv'
 # attr.path = '/mnt/data/image/2d/com_pre_proc/'
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
