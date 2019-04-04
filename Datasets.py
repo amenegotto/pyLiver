@@ -10,8 +10,7 @@ from keras.preprocessing.image import ImageDataGenerator
 
 def get_patient_info(patient_id, clinical_data):
     patient_row = clinical_data[clinical_data["Patient"] == patient_id]
-    patient_row.drop(['Source', 'Patient', 'Hcc'], axis=1, inplace=True)
-    return patient_row
+    return patient_row.drop(['Source', 'Patient', 'Hcc'], axis=1)
 
 
 def get_image(image_path, img_width, img_height):
@@ -66,7 +65,11 @@ def create_data(images_path, csv_path, img_width, img_height, show_info: False, 
                 img_info = relative_path.replace("\\", "/").split("/")
 
                 patient_id = img_info[len(img_info)-1].split('_')[0]
+#                print(patient_id)
+
                 patient_data = get_patient_info(patient_id, clinical_data)
+
+#                print(patient_data)
 
                 if img_info[1] == "ok":
                     if img_info[0] == "train":
@@ -75,11 +78,13 @@ def create_data(images_path, csv_path, img_width, img_height, show_info: False, 
                         labels_train.append(1)
                         fnames_train.append(relative_path)
                     elif img_info[0] == "valid":
+#                        print("valid")
                         images_valid.append(get_image(absolute_path, img_width, img_height))
                         attributes_valid.append(patient_data.values.ravel())
                         labels_valid.append(1)
                         fnames_valid.append(relative_path)
                     elif img_info[0] == "test":
+#                        print("test")
                         images_test.append(get_image(absolute_path, img_width, img_height))
                         attributes_test.append(patient_data.values.ravel())
                         labels_test.append(1)
@@ -91,40 +96,49 @@ def create_data(images_path, csv_path, img_width, img_height, show_info: False, 
                         labels_train.append(0)
                         fnames_train.append(relative_path)
                     elif img_info[0] == "valid":
+#                        print("valid")
                         images_valid.append(get_image(absolute_path, img_width, img_height))
                         attributes_valid.append(patient_data.values.ravel())
                         labels_valid.append(0)
                         fnames_valid.append(relative_path)
                     elif img_info[0] == "test":
+#                        print("test")
                         images_test.append(get_image(absolute_path, img_width, img_height))
                         attributes_test.append(patient_data.values.ravel())
                         labels_test.append(0)
                         fnames_test.append(relative_path)
 
     np_images_train = (np.array(images_train, dtype="float") / 255.0)
-    np_attributes_train = np.array(attributes_train)
-    np_labels_train = np.array(labels_train)
-    np_fnames_train = np.array(fnames_train)
     np_images_valid = (np.array(images_valid, dtype="float") / 255.0)
-    np_attributes_valid = np.array(attributes_valid)
-    np_labels_valid = np.array(labels_valid)
-    np_fnames_valid = np.array(fnames_valid)
     np_images_test = (np.array(images_test, dtype="float") / 255.0)
+
+    np_attributes_train = np.array(attributes_train)
+    np_attributes_valid = np.array(attributes_valid)
     np_attributes_test = np.array(attributes_test)
+
+    np_labels_train = np.array(labels_train)
+    np_labels_valid = np.array(labels_valid)
     np_labels_test = np.array(labels_test)
+
+    np_fnames_train = np.array(fnames_train)
+    np_fnames_valid = np.array(fnames_valid)
     np_fnames_test = np.array(fnames_test)
 
     np.save(npy_path + 'images_train.npy', np_images_train)
-    np.save(npy_path + 'fnames_train.npy', np_fnames_train)
-    np.save(npy_path + 'attributes_train.npy', np_attributes_train)
-    np.save(npy_path + 'labels_train.npy', np_labels_train)
     np.save(npy_path + 'images_valid.npy', np_images_valid)
-    np.save(npy_path + 'fnames_valid.npy', np_fnames_valid)
-    np.save(npy_path + 'attributes_valid.npy', np_attributes_valid)
-    np.save(npy_path + 'labels_valid.npy', np_labels_valid)
     np.save(npy_path + 'images_test.npy', np_images_test)
+
+
+    np.save(npy_path + 'fnames_train.npy', np_fnames_train)
+    np.save(npy_path + 'fnames_valid.npy', np_fnames_valid)
     np.save(npy_path + 'fnames_test.npy', np_fnames_test)
+    
+    np.save(npy_path + 'attributes_train.npy', np_attributes_train)
+    np.save(npy_path + 'attributes_valid.npy', np_attributes_valid)
     np.save(npy_path + 'attributes_test.npy', np_attributes_test)
+
+    np.save(npy_path + 'labels_train.npy', np_labels_train)
+    np.save(npy_path + 'labels_valid.npy', np_labels_valid)
     np.save(npy_path + 'labels_test.npy', np_labels_test)
 
     if show_info:

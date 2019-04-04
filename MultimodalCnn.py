@@ -28,8 +28,8 @@ from Datasets import load_data, create_image_generator, multimodal_generator_two
 # tf.set_random_seed(seed=seed)
 
 # Summary Information
- SUMMARY_PATH = "/mnt/data/results"
-#SUMMARY_PATH="c:/temp/results"
+SUMMARY_PATH = "/mnt/data/results"
+# SUMMARY_PATH="c:/temp/results"
 # SUMMARY_PATH="/tmp/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
@@ -42,6 +42,7 @@ CYCLES = 1
 # Execution Attributes
 attr = ExecutionAttribute()
 
+# numpy_path = '/home/amenegotto/dataset/2d/numpy/sem_pre_proc_mini/'
 numpy_path = '/mnt/data/image/2d/numpy/com_pre_proc/'
 # dimensions of our images.
 attr.img_width, attr.img_height = 96, 96
