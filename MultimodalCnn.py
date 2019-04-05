@@ -34,8 +34,8 @@ SUMMARY_PATH = "/mnt/data/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
-INTERMEDIATE_FUSION = True
-LATE_FUSION = False
+INTERMEDIATE_FUSION = False
+LATE_FUSION = True
 
 # how many times to execute the training/validation/test cycle
 CYCLES = 1
@@ -45,7 +45,7 @@ CYCLES = 1
 attr = ExecutionAttribute()
 
 # numpy_path = '/home/amenegotto/dataset/2d/numpy/sem_pre_proc_mini/'
-numpy_path = '/mnt/data/image/2d/numpy/com_pre_proc/'
+numpy_path = '/mnt/data/image/2d/numpy/sem_pre_proc/'
 # dimensions of our images.
 attr.img_width, attr.img_height = 96, 96
 
@@ -55,7 +55,7 @@ attr.img_width, attr.img_height = 96, 96
 attr.csv_path = 'csv/clinical_data.csv'
 # attr.path = '/mnt/data/image/2d/com_pre_proc/'
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 1 
+attr.epochs = 5 
 attr.batch_size = 32
 attr.set_dir_names()
 
