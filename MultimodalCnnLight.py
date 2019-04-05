@@ -34,9 +34,11 @@ SUMMARY_PATH = "/mnt/data/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
+INTERMEDIATE_FUSION = True
+LATE_FUSION = False
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 3
+CYCLES = 1
 
 #
 # Execution Attributes
@@ -56,7 +58,6 @@ attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
 attr.epochs = 2
 attr.batch_size = 32
 attr.set_dir_names()
-attr.fusion = "Intermediate Fusion"
 
 if K.image_data_format() == 'channels_first':
     input_image_s = (3, attr.img_width, attr.img_height)
@@ -100,18 +101,47 @@ for i in range(0, CYCLES):
 
     flat = Flatten()(pool2)
 
-    # auxiliary input (intermediary fusion)
-    attributes_input = Input(shape=input_attributes_s)
-    concat = concatenate([flat, attributes_input])
+    if INTERMEDIATE_FUSION:
+        attr.fusion = "Intermediate Fusion"
 
-    # dense net
-    hidden1 = Dense(512, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(concat)
-    bn5 = BatchNormalization()(hidden1)
-    act6 = Activation('relu')(bn5)
-    drop5 = Dropout(0.40)(act6)
-    hidden2 = Dense(1024, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(drop5)
-    drop6 = Dropout(0.40)(hidden2)
-    output = Dense(1, activation='sigmoid')(drop6)
+        attributes_input = Input(shape=input_attributes_s)
+        concat = concatenate([flat, attributes_input])
+
+        hidden1 = Dense(512, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(concat)
+        bn5 = BatchNormalization()(hidden1)
+        act6 = Activation('relu')(bn5)
+        drop5 = Dropout(0.40)(act6)
+        hidden2 = Dense(1024, activation='relu', kernel_initializer='he_normal',
+                        kernel_regularizer=regularizers.l2(0.0005))(drop5)
+        drop6 = Dropout(0.40)(hidden2)
+        output = Dense(1, activation='sigmoid')(drop6)
+
+    if LATE_FUSION:
+        attr.fusion = "Late Fusion"
+
+        hidden1 = Dense(512, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(flat)
+        bn5 = BatchNormalization()(hidden1)
+        act6 = Activation('relu')(bn5)
+        drop5 = Dropout(0.40)(act6)
+        hidden2 = Dense(1024, activation='relu', kernel_initializer='he_normal',
+                        kernel_regularizer=regularizers.l2(0.0005))(drop5)
+        drop6 = Dropout(0.40)(hidden2)
+        output_img = Dense(1, activation='sigmoid')(drop6)
+
+        attributes_input = Input(shape=input_attributes_s)
+        hidden3 = Dense(32, kernel_initializer='he_normal')(attributes_input)
+        bn6 = BatchNormalization()(hidden3)
+        act7 = Activation('relu')(bn6)
+        drop6 = Dropout(0.25)(act7)
+        hidden4 = Dense(64, kernel_initializer='he_normal')(drop6)
+        bn7 = BatchNormalization()(hidden4)
+        act8 = Activation('relu')(bn7)
+        drop7 = Dropout(0.40)(act7)
+        output_attributes = Dense(1, activation='sigmoid')(drop7)
+
+        concat = concatenate([output_img, output_attributes])
+        hidden5 = Dense(8, kernel_initializer='he_normal', activation='relu')(concat)
+        output = Dense(1, activation='sigmoid')(hidden5)
 
     attr.model = Model(inputs=[visible, attributes_input], outputs=output)
 
