@@ -110,11 +110,6 @@ for i in range(0, CYCLES):
                   optimizer=RMSprop(lr=0.000001),
                   metrics=['accuracy'])
 
-    time_callback = TimeCallback()
-
-    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=10, mode='max', restore_best_weights=True),
-                 ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
-
 
     # calculate steps based on number of images and batch size
     attr.train_samples = len(images_train)
@@ -135,9 +130,15 @@ for i in range(0, CYCLES):
     # nothing is done.
     test_datagen = create_image_generator(False, False)
 
-    attr.train_generator = multimodal_generator_two_inputs(images_train, attributes_train, labels_train, train_datagen, attr)
-    attr.validation_generator = multimodal_generator_two_inputs(images_valid, attributes_valid, labels_valid, test_datagen, attr)
-    attr.test_generator = multimodal_generator_two_inputs(images_test, attributes_test, labels_test, test_datagen, attr)
+    attr.train_generator = multimodal_generator_two_inputs(images_train, attributes_train, labels_train, train_datagen, attr.batch_size)
+    attr.validation_generator = multimodal_generator_two_inputs(images_valid, attributes_valid, labels_valid, test_datagen, attr.batch_size)
+    attr.test_generator = multimodal_generator_two_inputs(images_test, attributes_test, labels_test, test_datagen, 1)
+
+    time_callback = TimeCallback()
+
+    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=10, mode='max', restore_best_weights=True),
+                 ModelCheckpoint(attr.curr_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
+
 
     # training time
     history = attr.model.fit_generator(
@@ -153,13 +154,13 @@ for i in range(0, CYCLES):
     plot_train_stats(history, attr.curr_basename + '-training_loss.png', attr.curr_basename + '-training_accuracy.png')
 
     # make sure that the best weights are loaded (even if restore_best_weights is already true)
-    attr.model.load_weights(filepath=attr.summ_basename + "-ckweights.h5")
+    attr.model.load_weights(filepath=attr.curr_basename + "-ckweights.h5")
 
     # save model with weights for later reuse
     save_model(attr)
 
     # delete ckweights to save space - model file already has the best weights
-    os.remove(attr.summ_basename + "-ckweights.h5")
+    os.remove(attr.curr_basename + "-ckweights.h5")
 
     # create confusion matrix and report with accuracy, precision, recall, f-score
     write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks[1].stopped_epoch)

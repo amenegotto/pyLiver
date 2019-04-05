@@ -286,7 +286,7 @@ def get_base_name(basepath):
 
 
 def save_model(execattr: ExecutionAttribute):
-    execattr.model.save(execattr.summ_basename + "-model.h5")
+    execattr.model.save(execattr.curr_basename + "-model.h5")
 
 
 def copy_to_s3(execattr: ExecutionAttribute):

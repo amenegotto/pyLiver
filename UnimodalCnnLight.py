@@ -1,6 +1,6 @@
 # PURPOSE:
 # unimodal DCNN for hepatocarcinoma computer-aided diagnosis
-# with image augmentation
+# with image augmentation, lightweight network architecture from scratch
 
 from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
@@ -101,10 +101,6 @@ for i in range(0, CYCLES):
 
     plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
 
-    time_callback = TimeCallback()
-    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=15, mode='max', restore_best_weights=True),
-                 ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
-
     # this is the augmentation configuration we will use for training
     train_datagen = create_image_generator(True, True)
 
@@ -141,6 +137,11 @@ for i in range(0, CYCLES):
 
     attr.increment_seq()
 
+    time_callback = TimeCallback()
+    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=15, mode='max', restore_best_weights=True),
+                 ModelCheckpoint(attr.curr_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
+
+
     # Persist execution attributes for session resume
     save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.properties')
 
@@ -158,13 +159,13 @@ for i in range(0, CYCLES):
     plot_train_stats(history, attr.curr_basename + '-training_loss.png', attr.curr_basename + '-training_accuracy.png')
 
     # make sure that the best weights are loaded (even if restore_best_weights is already true)
-    attr.model.load_weights(filepath=attr.summ_basename + "-ckweights.h5")
+    attr.model.load_weights(filepath=attr.curr_basename + "-ckweights.h5")
 
     # save model with weights for later reuse
     save_model(attr)
 
     # delete ckweights to save space - model file already has the best weights
-    os.remove(attr.summ_basename + "-ckweights.h5")
+    os.remove(attr.curr_basename + "-ckweights.h5")
 
     # create confusion matrix and report with accuracy, precision, recall, f-score
     write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks[1].stopped_epoch)

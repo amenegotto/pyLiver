@@ -1,6 +1,6 @@
 # PURPOSE:
 # multimodal DCNN for hepatocarcinoma computer-aided diagnosis
-# without generators and image augmentation  (DRAFT)
+# with image augmentation , lightweight network architecture from scratch (DRAFT)
 
 from keras.utils import plot_model
 from keras.layers import Conv2D, MaxPooling2D, Input, concatenate
@@ -17,7 +17,7 @@ from TrainingResume import save_execution_attributes
 import os
 import numpy as np
 import tensorflow as tf
-from Datasets import load_data
+from Datasets import load_data, create_image_generator, multimodal_generator_two_inputs
 
 
 # os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin'
@@ -36,24 +36,24 @@ IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 1
+CYCLES = 3
 
 #
 # Execution Attributes
 attr = ExecutionAttribute()
 
+# numpy_path = '/home/amenegotto/dataset/2d/numpy/sem_pre_proc_mini/'
+numpy_path = '/mnt/data/image/2d/numpy/com_pre_proc/'
 # dimensions of our images.
 attr.img_width, attr.img_height = 96, 96
 
 # network parameters
 # attr.path='C:/Users/hp/Downloads/cars_train'
 # attr.path='/home/amenegotto/dataset/2d/sem_pre_proc_mini/
-numpy_path = '/mnt/data/image/2d/numpy/sem_pre_proc/'
-# numpy_path = '/home/amenegotto/dataset/2d/numpy/sem_pre_proc_mini/'
 attr.csv_path = 'csv/clinical_data.csv'
 # attr.path = '/mnt/data/image/2d/com_pre_proc/'
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 1
+attr.epochs = 2
 attr.batch_size = 32
 attr.set_dir_names()
 attr.fusion = "Intermediate Fusion"
@@ -75,7 +75,7 @@ attr.labels_test = labels_test
 for i in range(0, CYCLES):
 
     # define model
-
+    
     # image input
     visible = Input(shape=input_image_s)
     conv1 = Conv2D(32, (3, 3), kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(visible)
@@ -122,6 +122,16 @@ for i in range(0, CYCLES):
                   optimizer=RMSprop(lr=0.000001),
                   metrics=['accuracy'])
 
+    # this is the augmentation configuration we will use for training
+    train_datagen = create_image_generator(False, True)
+
+    # this is the augmentation configuration we will use for testing:
+    # nothing is done.
+    test_datagen = create_image_generator(False, False)
+
+    attr.train_generator = multimodal_generator_two_inputs(images_train, attributes_train, labels_train, train_datagen, attr.batch_size)
+    attr.validation_generator = multimodal_generator_two_inputs(images_valid, attributes_valid, labels_valid, test_datagen, attr.batch_size)
+    attr.test_generator = multimodal_generator_two_inputs(images_test, attributes_test, labels_test, test_datagen, 1)
 
     # calculate steps based on number of images and batch size
     attr.train_samples = len(images_train)
@@ -132,22 +142,23 @@ for i in range(0, CYCLES):
 
     attr.increment_seq()
 
-    time_callback = TimeCallback()
-
-    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=10, mode='max', restore_best_weights=True),
-                 ModelCheckpoint(attr.curr_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
-
-
     # Persist execution attributes for session resume
     save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.properties')
 
+    time_callback = TimeCallback()
+
+    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=3, mode='max', restore_best_weights=True),
+                 ModelCheckpoint(attr.curr_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
+
+   
     # training time
-    history = attr.model.fit(
-        [images_train, attributes_train], labels_train,
-        validation_data=([images_valid, attributes_valid], labels_valid),
+    history = attr.model.fit_generator(
+        attr.train_generator,
         steps_per_epoch=attr.steps_train,
         epochs=attr.epochs,
+        validation_data=attr.validation_generator,
         validation_steps=attr.steps_valid,
+        use_multiprocessing=True,
         callbacks=callbacks)
 
     # plot loss and accuracy

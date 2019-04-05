@@ -170,9 +170,9 @@ def show_images(images, cols=1, titles=None):
     plt.show()
 
 
-def multimodal_generator_two_inputs(images, attributes, labels, gen : ImageDataGenerator, attr: ExecutionAttribute, debug=False, gen_seed=666):
-    genX1 = gen.flow(images, labels, batch_size=attr.batch_size, seed=gen_seed)
-    genX2 = gen.flow(images, attributes, batch_size=attr.batch_size, seed=gen_seed)
+def multimodal_generator_two_inputs(images, attributes, labels, gen : ImageDataGenerator, bsize, debug=False, gen_seed=666):
+    genX1 = gen.flow(images, labels, batch_size=bsize, seed=gen_seed)
+    genX2 = gen.flow(images, attributes, batch_size=bsize, seed=gen_seed)
     while True:
             X1i = genX1.next()
             X2i = genX2.next()
