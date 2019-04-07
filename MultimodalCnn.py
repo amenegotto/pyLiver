@@ -106,27 +106,23 @@ for i in range(0, CYCLES):
 
     if LATE_FUSION:
         attr.fusion = "Late Fusion"
-        hidden1 = Dense(256, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(flat)
+        hidden1 = Dense(256, kernel_regularizer=regularizers.l2(0.0005))(flat)
         act3 = Activation('relu')(hidden1)
         drop3 = Dropout(0.40)(act3)
-        hidden2 = Dense(256, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(
+        hidden2 = Dense(256, activation='relu', kernel_regularizer=regularizers.l2(0.0005))(
             drop3)
         drop4 = Dropout(0.40)(hidden2)
         output_img = Dense(1, activation='sigmoid')(drop4)
-
+	
         attributes_input = Input(shape=input_attributes_s)
-        hidden3 = Dense(64, kernel_initializer='he_normal')(attributes_input)
-        bn6 = BatchNormalization()(hidden3)
-        act7 = Activation('relu')(bn6)
-        drop6 = Dropout(0.25)(act7)
-        hidden4 = Dense(128, kernel_initializer='he_normal')(drop6)
-        bn7 = BatchNormalization()(hidden4)
-        act8 = Activation('relu')(bn7)
-        drop7 = Dropout(0.40)(act7)
+        hidden3 = Dense(32, activation='relu')(attributes_input)
+        drop6 = Dropout(0.2)(hidden3)
+        hidden4 = Dense(16, activation='relu')(drop6)
+        drop7 = Dropout(0.2)(hidden4)
         output_attributes = Dense(1, activation='sigmoid')(drop7)
 
         concat = concatenate([output_img, output_attributes])
-        hidden5 = Dense(8, kernel_initializer='he_normal', activation='relu')(concat)
+        hidden5 = Dense(4, activation='relu')(concat)
         output = Dense(1, activation='sigmoid')(hidden5)
 
     attr.model = Model(inputs=[visible, attributes_input], outputs=output)
