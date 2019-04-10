@@ -170,7 +170,7 @@ def show_images(images, cols=1, titles=None):
     plt.show()
 
 
-def multimodal_generator_two_inputs(images, attributes, labels, gen : ImageDataGenerator, bsize, debug=False, gen_seed=666):
+def multimodal_flow_generator(images, attributes, labels, gen : ImageDataGenerator, bsize, debug=False, gen_seed=666):
     genX1 = gen.flow(images, labels, batch_size=bsize, seed=gen_seed)
     genX2 = gen.flow(images, attributes, batch_size=bsize, seed=gen_seed)
     while True:
@@ -178,7 +178,6 @@ def multimodal_generator_two_inputs(images, attributes, labels, gen : ImageDataG
             X2i = genX2.next()
 
             if debug:
-                # Assert arrays are equal - this was for peace of mind, but slows down training
                 np.testing.assert_array_equal(X1i[0],X2i[0])
                 print("\n\n\n\n====================Images==========================")
                 show_images(X1i[0], 1)
@@ -188,6 +187,48 @@ def multimodal_generator_two_inputs(images, attributes, labels, gen : ImageDataG
                 print(X1i[1])
 
             yield [X1i[0], X2i[1]], X1i[1]
+
+
+def multimodal_flow_from_directory_generator(dir_path, csv_path, gen : ImageDataGenerator, bsize, height, width, debug=False, gen_seed=666):
+    genX1 = gen.flow_from_directory(dir_path,
+                                    shuffle=False,
+                                    batch_size=bsize,
+                                    seed=gen_seed,
+                                    target_size=(width, height))
+
+    attributes = populate_clinical_data(genX1.filenames, csv_path)
+    current = 0
+    while True:
+            X1i = genX1.next()
+            X2i = attributes[range(current, current + bsize)]
+            current = current + bsize
+
+            if debug:
+                print("\n\n========================Current==========================")
+                print("Current = " + str(current))
+                np.testing.assert_array_equal(X1i[0],X2i[0])
+                print(X2i)
+                print("\n\n\n\n====================Images==========================")
+                show_images(X1i[0], 1)
+                print("\n\n====================Attributes==========================")
+                print(X2i[1])
+                print("\n\n====================Labels==========================")
+                print(X1i[1])
+
+            yield [X1i[0], X2i[1]], X1i[1]
+
+
+def populate_clinical_data(filenames, csv_path):
+    clinical_attributes = []
+    clinical_data = pd.read_csv(csv_path)
+
+    for f in filenames:
+        img_info = f.replace("\\", "/").split("/")
+        patient_id = img_info[len(img_info) - 1].split('_')[0]
+        patient_data = get_patient_info(patient_id, clinical_data)
+        clinical_attributes.append(patient_data.values.ravel())
+
+    return np.array(clinical_attributes)
 
 
 def create_image_generator(should_rescale, training):

@@ -128,29 +128,3 @@ print("Kappa Score = " + str(cohen_score))
 
 auc_score = roc_auc_score(labels_test, y_pred)
 print("ROC AUC Score = " + str(auc_score))
-
-
-
-
-
-
-
-
-# define ANN for additional data
-# attributes_input = Input(shape=(1,))
-# y = Dense(32, activation='relu')(attributes_input)
-# y = Dropout(0.25)(y)
-# y = Dense(64, activation='relu')(y)
-# y = Dropout(0.25)(y)
-# y = Dense(32, activation='relu')(y)
-# attributes_output = Dense(1, activation='sigmoid')(y)
-# attributes_model = Model(inputs=attributes_input, outputs=attributes_output)
-
-# late fusion both models
-# combinedInput = concatenate([image_model.output, attributes_model.output])
-
-# merged = Dense(2, activation='relu')(combinedInput)
-# merged_output = Dense(1, activation='sigmoid')(merged)
-
-
-# attr.model = Model(inputs=[image_input, attributes_input], outputs=merged_output)

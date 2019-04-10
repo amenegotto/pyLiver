@@ -30,6 +30,9 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
         if execattr.csv_path != "":
             f.write('CSV File: ' + execattr.csv_path + '\n')
 
+        if execattr.numpy_path is not None:
+            f.write('Numpy Path: ' + execattr.numpy_path + '\n')
+
         if execattr.fusion != "None":
             f.write('Train Samples: ' + str(execattr.train_samples) + '\n')
         else:
