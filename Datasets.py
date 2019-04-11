@@ -189,7 +189,7 @@ def multimodal_flow_generator(images, attributes, labels, gen : ImageDataGenerat
             yield [X1i[0], X2i[1]], X1i[1]
 
 
-def multimodal_flow_from_directory_generator(dir_path, csv_path, gen : ImageDataGenerator, bsize, height, width, debug=False, gen_seed=666, clazz_mode='binary'):
+def multimodal_flow_from_directory_generator(dir_path, csv_path, gen : ImageDataGenerator, bsize, height, width, clazz_mode, debug=False, gen_seed=666):
     genX1 = gen.flow_from_directory(dir_path,
                                     shuffle=False,
                                     batch_size=bsize,
@@ -200,6 +200,9 @@ def multimodal_flow_from_directory_generator(dir_path, csv_path, gen : ImageData
     attributes = populate_clinical_data(genX1.filenames, csv_path)
     current = 0
     while True:
+            if (current + bsize) > len(genX1.filenames):
+                current = 0
+
             X1i = genX1.next()
             X2i = attributes[range(current, current + bsize)]
             current = current + bsize
@@ -207,19 +210,21 @@ def multimodal_flow_from_directory_generator(dir_path, csv_path, gen : ImageData
             if debug:
                 print("\n\n========================Current==========================")
                 print("Current = " + str(current))
-                print(X2i)
                 print("\n\n\n\n====================Images==========================")
                 print(X1i[0].shape)
-                #show_images(X1i[0], 1)
+                # show_images(X1i[0], 1)
                 print("\n\n====================Attributes==========================")
-                print(X2i[1])
+                print(X2i)
+                print(X2i.shape)
                 print("\n\n====================Labels==========================")
                 print(X1i[1])
+                print(X1i[1].shape)
 
-            yield [X1i[0], X2i[1]], X1i[1]
+            yield [X1i[0], X2i], X1i[1]
 
 
 def populate_clinical_data(filenames, csv_path):
+    print("[INFO] Populating clinical data...")
     clinical_attributes = []
     clinical_data = pd.read_csv(csv_path)
 

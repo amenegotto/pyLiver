@@ -1,7 +1,7 @@
 # PURPOSE:
 # multimodal DCNN for hepatocarcinoma computer-aided diagnosis
 # with image augmentation , lightweight network architecture from scratch.
-# Images and labels are read from disk in batches. Clinical attributes is read from previously generated numpy arrays.
+# Images, clinical attributes and labels are read from disk in batches. 
 
 from keras.utils import plot_model
 from keras.layers import Conv2D, MaxPooling2D, Input, concatenate
@@ -18,7 +18,7 @@ from TrainingResume import save_execution_attributes
 import os
 import numpy as np
 import tensorflow as tf
-from Datasets import load_data, create_image_generator, multimodal_flow_from_directory_generator
+from Datasets import create_image_generator, multimodal_flow_from_directory_generator
 
 
 # os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin'
@@ -29,10 +29,10 @@ from Datasets import load_data, create_image_generator, multimodal_flow_from_dir
 # tf.set_random_seed(seed=seed)
 
 # Summary Information
-IMG_TYPE = "sem_pre_proc_mini/"
-# SUMMARY_PATH = "/mnt/data/results"
+IMG_TYPE = "sem_pre_proc/"
+SUMMARY_PATH = "/mnt/data/results"
 # SUMMARY_PATH="c:/temp/results"
-SUMMARY_PATH="/tmp/results"
+# SUMMARY_PATH="/tmp/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
@@ -50,13 +50,13 @@ attr.img_width, attr.img_height = 96, 96
 
 # network parameters
 attr.csv_path = 'csv/clinical_data.csv'
-# attr.path = '/mnt/data/image/2d/' + IMG_TYPE
-attr.path = '/home/amenegotto/dataset/2d/' + IMG_TYPE
-# attr.numpy_path = '/mnt/data/image/2d/numpy/' + IMG_TYPE
-attr.numpy_path = '/home/amenegotto/dataset/2d/numpy/' + IMG_TYPE
+attr.path = '/mnt/data/image/2d/' + IMG_TYPE
+# attr.path = '/home/amenegotto/dataset/2d/' + IMG_TYPE
+attr.numpy_path = '/mnt/data/image/2d/numpy/' + IMG_TYPE
+# attr.numpy_path = '/home/amenegotto/dataset/2d/numpy/' + IMG_TYPE
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 1
-attr.batch_size = 32
+attr.epochs = 3
+attr.batch_size = 128
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':
@@ -151,6 +151,7 @@ for i in range(0, CYCLES):
     attr.validation_generator = multimodal_flow_from_directory_generator(attr.validation_data_dir, attr.csv_path, test_datagen, attr.batch_size, attr.img_height, attr.img_width, 'binary')
     attr.test_generator = multimodal_flow_from_directory_generator(attr.test_data_dir, attr.csv_path, test_datagen, 1, attr.img_height, attr.img_width, 'binary')
 
+    print("[INFO] Calculating samples and steps...")
     attr.calculate_samples_len(train_datagen, test_datagen)
 
     attr.calculate_steps()
