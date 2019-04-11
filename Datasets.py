@@ -189,11 +189,12 @@ def multimodal_flow_generator(images, attributes, labels, gen : ImageDataGenerat
             yield [X1i[0], X2i[1]], X1i[1]
 
 
-def multimodal_flow_from_directory_generator(dir_path, csv_path, gen : ImageDataGenerator, bsize, height, width, debug=False, gen_seed=666):
+def multimodal_flow_from_directory_generator(dir_path, csv_path, gen : ImageDataGenerator, bsize, height, width, debug=False, gen_seed=666, clazz_mode='binary'):
     genX1 = gen.flow_from_directory(dir_path,
                                     shuffle=False,
                                     batch_size=bsize,
                                     seed=gen_seed,
+                                    class_mode=clazz_mode,
                                     target_size=(width, height))
 
     attributes = populate_clinical_data(genX1.filenames, csv_path)
@@ -206,10 +207,10 @@ def multimodal_flow_from_directory_generator(dir_path, csv_path, gen : ImageData
             if debug:
                 print("\n\n========================Current==========================")
                 print("Current = " + str(current))
-                np.testing.assert_array_equal(X1i[0],X2i[0])
                 print(X2i)
                 print("\n\n\n\n====================Images==========================")
-                show_images(X1i[0], 1)
+                print(X1i[0].shape)
+                #show_images(X1i[0], 1)
                 print("\n\n====================Attributes==========================")
                 print(X2i[1])
                 print("\n\n====================Labels==========================")

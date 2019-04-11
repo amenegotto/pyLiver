@@ -29,15 +29,15 @@ from Datasets import load_data, create_image_generator, multimodal_flow_from_dir
 # tf.set_random_seed(seed=seed)
 
 # Summary Information
-IMG_TYPE = "com_pre_proc/"
-SUMMARY_PATH = "/mnt/data/results"
+IMG_TYPE = "sem_pre_proc_mini/"
+# SUMMARY_PATH = "/mnt/data/results"
 # SUMMARY_PATH="c:/temp/results"
-# SUMMARY_PATH="/tmp/results"
+SUMMARY_PATH="/tmp/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
-INTERMEDIATE_FUSION = False
-LATE_FUSION = True
+INTERMEDIATE_FUSION = True
+LATE_FUSION = False
 
 # how many times to execute the training/validation/test cycle
 CYCLES = 1
@@ -50,10 +50,12 @@ attr.img_width, attr.img_height = 96, 96
 
 # network parameters
 attr.csv_path = 'csv/clinical_data.csv'
-attr.path = '/mnt/data/image/2d/' + IMG_TYPE
-attr.numpy_path = '/mnt/data/image/2d/numpy/' + IMG_TYPE
+# attr.path = '/mnt/data/image/2d/' + IMG_TYPE
+attr.path = '/home/amenegotto/dataset/2d/' + IMG_TYPE
+# attr.numpy_path = '/mnt/data/image/2d/numpy/' + IMG_TYPE
+attr.numpy_path = '/home/amenegotto/dataset/2d/numpy/' + IMG_TYPE
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 5
+attr.epochs = 1
 attr.batch_size = 32
 attr.set_dir_names()
 
@@ -145,9 +147,9 @@ for i in range(0, CYCLES):
     # nothing is done.
     test_datagen = create_image_generator(False, False)
 
-    attr.train_generator = multimodal_flow_from_directory_generator(attr.train_data_dir, attr.csv_path, train_datagen, attr.batch_size, attr.img_height, attr.img_width)
-    attr.validation_generator = multimodal_flow_from_directory_generator(attr.validation_data_dir, attr.csv_path, test_datagen, attr.batch_size, attr.img_height, attr.img_width)
-    attr.test_generator = multimodal_flow_from_directory_generator(attr.test_data_dir, attr.csv_path, test_datagen, 1, attr.img_height, attr.img_width)
+    attr.train_generator = multimodal_flow_from_directory_generator(attr.train_data_dir, attr.csv_path, train_datagen, attr.batch_size, attr.img_height, attr.img_width, 'binary')
+    attr.validation_generator = multimodal_flow_from_directory_generator(attr.validation_data_dir, attr.csv_path, test_datagen, attr.batch_size, attr.img_height, attr.img_width, 'binary')
+    attr.test_generator = multimodal_flow_from_directory_generator(attr.test_data_dir, attr.csv_path, test_datagen, 1, attr.img_height, attr.img_width, 'binary')
 
     attr.calculate_samples_len(train_datagen, test_datagen)
 
