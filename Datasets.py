@@ -7,7 +7,6 @@ import cv2
 from keras.preprocessing.image import img_to_array
 import numpy as np
 import matplotlib.pyplot as plt
-from ExecutionAttributes import ExecutionAttribute
 from keras.preprocessing.image import ImageDataGenerator
 
 
@@ -17,8 +16,8 @@ def get_patient_info(patient_id, clinical_data):
 
 
 def get_image(image_path, img_width, img_height):
-    print('[INFO] Loading ' + image_path)
-    image = cv2.imread('/home/amenegotto/dataset/2d/sem_pre_proc_mini/' + image_path)
+    # print('[INFO] Loading ' + image_path)
+    image = cv2.imread(image_path)
     image = cv2.resize(image, (img_width, img_height))
     image = img_to_array(image)
     return image
@@ -190,7 +189,7 @@ def create_data_as_list(images_path, csv_path, show_info: False, npy_path):
 #                print(patient_data)
 
                 if img_info[1] == "ok":
-                    row = [ relative_path, patient_data.values.ravel(), 1 ]
+                    row = [ absolute_path, patient_data.values.ravel(), 1 ]
                     if img_info[0] == "train":
                         train.append(row)
                     elif img_info[0] == "valid":
@@ -198,7 +197,7 @@ def create_data_as_list(images_path, csv_path, show_info: False, npy_path):
                     elif img_info[0] == "test":
                         test.append(row)
                 elif img_info[1] == "nok":
-                    row = [ relative_path, patient_data.values.ravel(), 0 ]
+                    row = [ absolute_path, patient_data.values.ravel(), 0 ]
                     if img_info[0] == "train":
                         train.append(row)
                     elif img_info[0] == "valid":

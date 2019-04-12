@@ -1,8 +1,8 @@
 # PURPOSE:
 # multimodal DCNN for hepatocarcinoma computer-aided diagnosis
-# with image augmentation , lightweight network architecture from scratch.
+# without augmentation and lightweight network architecture from scratch.
 # Images, clinical attributes and labels are read from disk in batches
-# using a custom non thread-safe generator.
+# using a custom thread-safe generator.
 
 from keras.utils import plot_model
 from keras.layers import Conv2D, MaxPooling2D, Input, concatenate
@@ -17,9 +17,7 @@ from TimeCallback import TimeCallback
 from Summary import plot_train_stats, create_results_dir, get_base_name, write_summary_txt, save_model, copy_to_s3
 from TrainingResume import save_execution_attributes
 import os
-import numpy as np
-import tensorflow as tf
-from Datasets import create_image_generator, multimodal_flow_from_directory_generator
+from MultimodalGenerator import MultimodalGenerator
 
 
 # os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin'
@@ -51,19 +49,17 @@ attr.img_width, attr.img_height = 96, 96
 
 # network parameters
 attr.csv_path = 'csv/clinical_data.csv'
-attr.path = '/mnt/data/image/2d/' + IMG_TYPE
-# attr.path = '/home/amenegotto/dataset/2d/' + IMG_TYPE
 attr.numpy_path = '/mnt/data/image/2d/numpy/' + IMG_TYPE
 # attr.numpy_path = '/home/amenegotto/dataset/2d/numpy/' + IMG_TYPE
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 2
+attr.epochs = 1
 attr.batch_size = 32
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':
-    input_image_s = (3, attr.img_width, attr.img_height)
+    input_image_s = (1, attr.img_width, attr.img_height)
 else:
-    input_image_s = (attr.img_width, attr.img_height, 3)
+    input_image_s = (attr.img_width, attr.img_height, 1)
 
 input_attributes_s = (20,)
 
@@ -141,16 +137,9 @@ for i in range(0, CYCLES):
                   optimizer=RMSprop(lr=0.000001),
                   metrics=['accuracy'])
 
-    # this is the augmentation configuration we will use for training
-    train_datagen = create_image_generator(False, True)
-
-    # this is the augmentation configuration we will use for testing:
-    # nothing is done.
-    test_datagen = create_image_generator(False, False)
-
-    attr.train_generator = multimodal_flow_from_directory_generator(attr.train_data_dir, attr.csv_path, train_datagen, attr.batch_size, attr.img_height, attr.img_width, 'binary', True)
-    attr.validation_generator = multimodal_flow_from_directory_generator(attr.validation_data_dir, attr.csv_path, test_datagen, attr.batch_size, attr.img_height, attr.img_width, 'binary', True)
-    attr.test_generator = multimodal_flow_from_directory_generator(attr.test_data_dir, attr.csv_path, test_datagen, 1, attr.img_height, attr.img_width, 'binary', False)
+    attr.train_generator = MultimodalGenerator(attr.numpy_path, attr.batch_size, attr.img_height, attr.img_width, 1, 2, True, False)
+    attr.validation_generator = MultimodalGenerator(attr.numpy_path, attr.batch_size, attr.img_height, attr.img_width, 1, 2, True, False)
+    attr.test_generator = MultimodalGenerator(attr.numpy_path, 1, attr.img_height, attr.img_width, 1, 2, True, False)
 
     print("[INFO] Calculating samples and steps...")
     attr.calculate_samples_len()

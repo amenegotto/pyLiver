@@ -1,9 +1,10 @@
 # PURPOSE:
-# Create a thread safe Custom Generator, initially without image augmentation.
+# Create a thread safe Custom Batch Generator, initially without image augmentation.
 
 from keras.utils import Sequence
 from Datasets import get_image
 import numpy as np
+
 
 class MultimodalGenerator(Sequence):
     
@@ -22,12 +23,10 @@ class MultimodalGenerator(Sequence):
         self.shuffle = should_shuffle
         self.on_epoch_end()
 
-
     def __len__(self):
         if self.debug:
            print("_len__")
         return int(np.floor(len(self.dataset) // self.batch_size))
-
 
     def on_epoch_end(self):
         if self.debug:
@@ -36,13 +35,11 @@ class MultimodalGenerator(Sequence):
         if self.shuffle == True:
             np.random.shuffle(self.indexes)
 
-
     def __getitem__(self, index):
         if self.debug:
             print("_get_item__")
         batch_array = self.dataset[range(index*self.batch_size, (index+1)*self.batch_size)]
         return self.__data_generation(batch_array)
-
 
     def __data_generation(self, batch_array):
         if self.debug:
