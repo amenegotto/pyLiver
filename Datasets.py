@@ -1,3 +1,6 @@
+# PURPOSE: 
+# Utility methods for dataset creation and load
+
 import pandas as pd
 import os
 import cv2
@@ -15,7 +18,7 @@ def get_patient_info(patient_id, clinical_data):
 
 def get_image(image_path, img_width, img_height):
     print('[INFO] Loading ' + image_path)
-    image = cv2.imread(image_path)
+    image = cv2.imread('/home/amenegotto/dataset/2d/sem_pre_proc_mini/' + image_path)
     image = cv2.resize(image, (img_width, img_height))
     image = img_to_array(image)
     return image
@@ -30,7 +33,7 @@ def load_data(numpy_path):
     return load_numpy(numpy_path, 'images_train'), load_numpy(numpy_path, 'fnames_train'), load_numpy(numpy_path, 'attributes_train'), load_numpy(numpy_path, 'labels_train'), load_numpy(numpy_path, 'images_valid'), load_numpy(numpy_path, 'fnames_valid'), load_numpy(numpy_path, 'attributes_valid'), load_numpy(numpy_path, 'labels_valid'), load_numpy(numpy_path, 'images_test'), load_numpy(numpy_path, 'fnames_test'), load_numpy(numpy_path, 'attributes_test'), load_numpy(numpy_path, 'labels_test')
 
 
-def create_data(images_path, csv_path, img_width, img_height, show_info: False, npy_path):
+def create_data_as_numpy(images_path, csv_path, img_width, img_height, show_info: False, npy_path):
     fnames_train = []
     fnames_valid = []
     fnames_test = []
@@ -149,6 +152,76 @@ def create_data(images_path, csv_path, img_width, img_height, show_info: False, 
         print("[INFO] Training image size: {:.2f}MB".format(np_images_train.nbytes / (1024 * 1000.0)))
         print("[INFO] Validation image size: {:.2f}MB".format(np_images_valid.nbytes / (1024 * 1000.0)))
         print("[INFO] Testing image size: {:.2f}MB".format(np_images_test.nbytes / (1024 * 1000.0)))
+        print("------------------------------------------")
+
+    print("Done!")
+
+
+def create_data_as_list(images_path, csv_path, show_info: False, npy_path):
+    train = []
+    valid = []
+    test = []
+
+    print("[INFO] Loading auxiliary patient data from " + csv_path)
+
+    clinical_data = pd.read_csv(csv_path)
+
+    print("[INFO] Patients Count: " + str(len(clinical_data)))
+
+    print("[INFO] Loading images from " + images_path)
+
+    # search recursively for png files
+    for dirpath, dirs, files in os.walk(images_path):
+        images_count = len(files)
+        if images_count > 0:
+            print("[INFO] Found " + str(len(files)) + " images...")
+
+        for f in files:
+            if os.path.splitext(f)[1] == ".png":
+                absolute_path = dirpath + '/' + f
+                relative_path = absolute_path.replace(images_path, "")
+                img_info = relative_path.replace("\\", "/").split("/")
+
+                patient_id = img_info[len(img_info)-1].split('_')[0]
+#                print(patient_id)
+
+                patient_data = get_patient_info(patient_id, clinical_data)
+
+#                print(patient_data)
+
+                if img_info[1] == "ok":
+                    row = [ relative_path, patient_data.values.ravel(), 1 ]
+                    if img_info[0] == "train":
+                        train.append(row)
+                    elif img_info[0] == "valid":
+                        valid.append(row)
+                    elif img_info[0] == "test":
+                        test.append(row)
+                elif img_info[1] == "nok":
+                    row = [ relative_path, patient_data.values.ravel(), 0 ]
+                    if img_info[0] == "train":
+                        train.append(row)
+                    elif img_info[0] == "valid":
+                        valid.append(row)
+                    elif img_info[0] == "test":
+                        test.append(row)
+
+    np_train = np.array(train)
+    np_valid = np.array(valid)
+    np_test = np.array(test)
+
+    np.save(npy_path + 'train.npy', np_train)
+    np.save(npy_path + 'valid.npy', np_valid)
+    np.save(npy_path + 'test.npy', np_test)
+
+    if show_info:
+        print("------------------------------------------")
+        print("[INFO] Training count: {:.2f}".format(len(np_train)))
+        print("[INFO] Validation count: {:.2f}".format(len(np_valid)))
+        print("[INFO] Testing count: {:.2f}".format(len(np_test)))
+        print("[INFO] Training size: {:.2f}MB".format(np_train.nbytes / (1024 * 1000.0)))
+        print("[INFO] Validation size: {:.2f}MB".format(np_valid.nbytes / (1024 * 1000.0)))
+        print("[INFO] Testing size: {:.2f}MB".format(np_test.nbytes / (1024 * 1000.0)))
         print("------------------------------------------")
 
     print("Done!")

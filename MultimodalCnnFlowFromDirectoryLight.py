@@ -1,7 +1,8 @@
 # PURPOSE:
 # multimodal DCNN for hepatocarcinoma computer-aided diagnosis
 # with image augmentation , lightweight network architecture from scratch.
-# Images, clinical attributes and labels are read from disk in batches. 
+# Images, clinical attributes and labels are read from disk in batches
+# using a custom non thread-safe generator.
 
 from keras.utils import plot_model
 from keras.layers import Conv2D, MaxPooling2D, Input, concatenate
