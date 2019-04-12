@@ -77,7 +77,7 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
         f.write("\nNumber of Test Samples:\n")
         f.write(str(nb_samples) + "\n\n")
 
-        score_gen = execattr.model.evaluate_generator(generator=execattr.test_generator, steps=execattr.steps_test, verbose=1)
+        score_gen = execattr.model.evaluate_generator(generator=execattr.test_generator, workers=1, use_multiprocessing=False, steps=execattr.steps_test, verbose=1)
 
         print(score)
         print('Test Loss:', score_gen[0])
@@ -96,7 +96,7 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
             execattr.test_generator.reset()
 
         if execattr.architecture != "":
-            Y_pred = execattr.model.predict_generator(execattr.test_generator, steps=execattr.steps_test, verbose=1)
+            Y_pred = execattr.model.predict_generator(execattr.test_generator, workers=1, use_multiprocessing=False, steps=execattr.steps_test, verbose=1)
             y_pred = np.argmax(Y_pred, axis=1)
 
             print(Y_pred)
@@ -153,7 +153,7 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
             plt.clf()
 
         else:    
-            Y_pred = execattr.model.predict_generator(execattr.test_generator, steps=execattr.steps_test, verbose=1)
+            Y_pred = execattr.model.predict_generator(execattr.test_generator, workers=1, use_multiprocessing=False, steps=execattr.steps_test, verbose=1)
             y_pred = np.rint(Y_pred)
 
             print(Y_pred)

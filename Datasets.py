@@ -189,9 +189,9 @@ def multimodal_flow_generator(images, attributes, labels, gen : ImageDataGenerat
             yield [X1i[0], X2i[1]], X1i[1]
 
 
-def multimodal_flow_from_directory_generator(dir_path, csv_path, gen : ImageDataGenerator, bsize, height, width, clazz_mode, debug=False, gen_seed=666):
+def multimodal_flow_from_directory_generator(dir_path, csv_path, gen : ImageDataGenerator, bsize, height, width, clazz_mode, should_shuffle, debug=False, gen_seed=666):
     genX1 = gen.flow_from_directory(dir_path,
-                                    shuffle=False,
+                                    shuffle=should_shuffle,
                                     batch_size=bsize,
                                     seed=gen_seed,
                                     class_mode=clazz_mode,
@@ -204,8 +204,13 @@ def multimodal_flow_from_directory_generator(dir_path, csv_path, gen : ImageData
                 current = 0
 
             X1i = genX1.next()
-            X2i = attributes[range(current, current + bsize)]
-            current = current + bsize
+            
+            if X1i[0].shape[0] < bsize:
+                X2i = attributes[range(current, current + X1i[0].shape[0])]
+                current = current + X1i[0].shape[0]
+            else:
+                X2i = attributes[range(current, current + bsize)]
+                current = current + bsize
 
             if debug:
                 print("\n\n========================Current==========================")

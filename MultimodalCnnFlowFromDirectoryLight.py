@@ -55,8 +55,8 @@ attr.path = '/mnt/data/image/2d/' + IMG_TYPE
 attr.numpy_path = '/mnt/data/image/2d/numpy/' + IMG_TYPE
 # attr.numpy_path = '/home/amenegotto/dataset/2d/numpy/' + IMG_TYPE
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 3
-attr.batch_size = 128
+attr.epochs = 2
+attr.batch_size = 32
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':
@@ -147,9 +147,9 @@ for i in range(0, CYCLES):
     # nothing is done.
     test_datagen = create_image_generator(False, False)
 
-    attr.train_generator = multimodal_flow_from_directory_generator(attr.train_data_dir, attr.csv_path, train_datagen, attr.batch_size, attr.img_height, attr.img_width, 'binary')
-    attr.validation_generator = multimodal_flow_from_directory_generator(attr.validation_data_dir, attr.csv_path, test_datagen, attr.batch_size, attr.img_height, attr.img_width, 'binary')
-    attr.test_generator = multimodal_flow_from_directory_generator(attr.test_data_dir, attr.csv_path, test_datagen, 1, attr.img_height, attr.img_width, 'binary')
+    attr.train_generator = multimodal_flow_from_directory_generator(attr.train_data_dir, attr.csv_path, train_datagen, attr.batch_size, attr.img_height, attr.img_width, 'binary', True)
+    attr.validation_generator = multimodal_flow_from_directory_generator(attr.validation_data_dir, attr.csv_path, test_datagen, attr.batch_size, attr.img_height, attr.img_width, 'binary', True)
+    attr.test_generator = multimodal_flow_from_directory_generator(attr.test_data_dir, attr.csv_path, test_datagen, 1, attr.img_height, attr.img_width, 'binary', False)
 
     print("[INFO] Calculating samples and steps...")
     attr.calculate_samples_len(train_datagen, test_datagen)
@@ -174,7 +174,7 @@ for i in range(0, CYCLES):
         epochs=attr.epochs,
         validation_data=attr.validation_generator,
         validation_steps=attr.steps_valid,
-        use_multiprocessing=True,
+        use_multiprocessing=False,
         callbacks=callbacks)
 
     # plot loss and accuracy
@@ -194,5 +194,5 @@ for i in range(0, CYCLES):
 
     K.clear_session()
 
-copy_to_s3(attr)
+# copy_to_s3(attr)
 # os.system("sudo poweroff")
