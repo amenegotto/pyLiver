@@ -51,15 +51,16 @@ attr.img_width, attr.img_height = 96, 96
 attr.csv_path = 'csv/clinical_data.csv'
 attr.numpy_path = '/mnt/data/image/2d/numpy/' + IMG_TYPE
 # attr.numpy_path = '/home/amenegotto/dataset/2d/numpy/' + IMG_TYPE
+attr.path = '/mnt/data/image/2d/' + IMG_TYPE
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 1
-attr.batch_size = 32
+attr.epochs = 2
+attr.batch_size = 128
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':
-    input_image_s = (1, attr.img_width, attr.img_height)
+    input_image_s = (3, attr.img_width, attr.img_height)
 else:
-    input_image_s = (attr.img_width, attr.img_height, 1)
+    input_image_s = (attr.img_width, attr.img_height, 3)
 
 input_attributes_s = (20,)
 
@@ -137,9 +138,9 @@ for i in range(0, CYCLES):
                   optimizer=RMSprop(lr=0.000001),
                   metrics=['accuracy'])
 
-    attr.train_generator = MultimodalGenerator(attr.numpy_path, attr.batch_size, attr.img_height, attr.img_width, 1, 2, True, False)
-    attr.validation_generator = MultimodalGenerator(attr.numpy_path, attr.batch_size, attr.img_height, attr.img_width, 1, 2, True, False)
-    attr.test_generator = MultimodalGenerator(attr.numpy_path, 1, attr.img_height, attr.img_width, 1, 2, True, False)
+    attr.train_generator = MultimodalGenerator(attr.numpy_path + '/train.npy', attr.batch_size, attr.img_height, attr.img_width, 1, 2, True, False)
+    attr.validation_generator = MultimodalGenerator(attr.numpy_path + '/valid.npy', attr.batch_size, attr.img_height, attr.img_width, 1, 2, True, False)
+    attr.test_generator = MultimodalGenerator(attr.numpy_path + 'test.npy', 1, attr.img_height, attr.img_width, 1, 2, True, False)
 
     print("[INFO] Calculating samples and steps...")
     attr.calculate_samples_len()
@@ -164,7 +165,8 @@ for i in range(0, CYCLES):
         epochs=attr.epochs,
         validation_data=attr.validation_generator,
         validation_steps=attr.steps_valid,
-        use_multiprocessing=False,
+        use_multiprocessing=True,
+        workers=10,
         callbacks=callbacks)
 
     # plot loss and accuracy

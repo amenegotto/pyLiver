@@ -15,6 +15,11 @@ class MultimodalGenerator(Sequence):
             print("On generator init")
 
         self.dataset = np.load(npy_path)
+
+        if self.debug:
+            print("Loaded numpy array " + npy_path)
+            print("dataset shape = " + str(self.dataset.shape))
+
         self.batch_size = batch_size
         self.height = height
         self.width = width
@@ -44,11 +49,12 @@ class MultimodalGenerator(Sequence):
     def __data_generation(self, batch_array):
         if self.debug:
            print("__data_generation__")
+           print("len(batch_array) = " + str(len(batch_array)))
 
-        imgs_path = self.dataset[:,0]
+        imgs_path = batch_array[:,0]
         batch_img = []
-        batch_attributes = self.dataset[:,1]
-        batch_labels = self.dataset[:, 2]
+        batch_attributes = batch_array[:,range(1,21)]
+        batch_labels = batch_array[:, 21]
 
         for img_path in imgs_path:
             img = get_image(img_path, self.width, self.height)            

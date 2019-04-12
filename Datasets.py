@@ -178,32 +178,43 @@ def create_data_as_list(images_path, csv_path, show_info: False, npy_path):
         for f in files:
             if os.path.splitext(f)[1] == ".png":
                 absolute_path = dirpath + '/' + f
+                print(absolute_path)
                 relative_path = absolute_path.replace(images_path, "")
                 img_info = relative_path.replace("\\", "/").split("/")
 
                 patient_id = img_info[len(img_info)-1].split('_')[0]
-#                print(patient_id)
+                print(patient_id)
 
                 patient_data = get_patient_info(patient_id, clinical_data)
 
 #                print(patient_data)
+                 
+                path_array = [ absolute_path ]
+                mid_array = np.hstack((np.array(path_array), patient_data.values.ravel()))
 
                 if img_info[1] == "ok":
-                    row = [ absolute_path, patient_data.values.ravel(), 1 ]
+                    row = np.hstack((mid_array, np.array([1])))
                     if img_info[0] == "train":
                         train.append(row)
                     elif img_info[0] == "valid":
                         valid.append(row)
                     elif img_info[0] == "test":
                         test.append(row)
+                    else:
+                        print("Error: " + absolute_path + " - " + patient_id)
                 elif img_info[1] == "nok":
-                    row = [ absolute_path, patient_data.values.ravel(), 0 ]
+                    row = np.hstack((mid_array, np.array([0])))
                     if img_info[0] == "train":
                         train.append(row)
                     elif img_info[0] == "valid":
                         valid.append(row)
                     elif img_info[0] == "test":
                         test.append(row)
+                    else:
+                        print("Error: " + absolute_path + " - " + patient_id)
+
+                else:
+                    print("Error: " + absolute_path + " - " + patient_id)
 
     np_train = np.array(train)
     np_valid = np.array(valid)
