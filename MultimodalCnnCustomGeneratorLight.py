@@ -138,9 +138,9 @@ for i in range(0, CYCLES):
                   optimizer=RMSprop(lr=0.000001),
                   metrics=['accuracy'])
 
-    attr.train_generator = MultimodalGenerator(attr.numpy_path + '/train.npy', attr.batch_size, attr.img_height, attr.img_width, 1, 2, True, False)
-    attr.validation_generator = MultimodalGenerator(attr.numpy_path + '/valid.npy', attr.batch_size, attr.img_height, attr.img_width, 1, 2, True, False)
-    attr.test_generator = MultimodalGenerator(attr.numpy_path + 'test.npy', 1, attr.img_height, attr.img_width, 1, 2, True, False)
+    attr.train_generator = MultimodalGenerator(attr.numpy_path + '/train.npy', attr.batch_size, attr.img_height, attr.img_width, 3, 2, True, False, 0.2, 0.2, 15, 10, 0.2)
+    attr.validation_generator = MultimodalGenerator(attr.numpy_path + '/valid.npy', attr.batch_size, attr.img_height, attr.img_width, 3, 2, True, False, 0.2, 0.2, 15, 10, 0.2)
+    attr.test_generator = MultimodalGenerator(attr.numpy_path + 'test.npy', 1, attr.img_height, attr.img_width, 3, 2, True, False)
 
     print("[INFO] Calculating samples and steps...")
     attr.calculate_samples_len()

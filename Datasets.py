@@ -328,15 +328,13 @@ def populate_clinical_data(filenames, csv_path):
 def create_image_generator(should_rescale, training):
     if training:
         return ImageDataGenerator(
-            #   rotation_range=2,
+            rotation_range=15,
             width_shift_range=0.2,
             height_shift_range=0.2,
             rescale=(1. / 255) if should_rescale else None,
-            shear_range=0.2,
-            zoom_range=0.1,
-            #   horizontal_flip=True,
-            #   fill_mode='nearest')
-        )
+            shear_range=10,
+            zoom_range=0.2,
+            fill_mode='nearest')
     else:
         return ImageDataGenerator(
             rescale=(1. / 255) if should_rescale else None

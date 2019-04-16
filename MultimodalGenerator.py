@@ -4,12 +4,13 @@
 from keras.utils import Sequence
 from Datasets import get_image
 import numpy as np
-from ImageAugmentation import random_shift, random_rotation, random_shear, random_zoom
+from ImageAugmentation import rnd_shift, rnd_rotation, rnd_shear, rnd_zoom
 import random
+
 
 class MultimodalGenerator(Sequence):
     
-    def __init__(self, npy_path, batch_size, height, width, channels, classes, should_shuffle=True, is_debug=False, width_shift=None, height_shift=None, rotation_angle=None, shear_factor=None, min_zoom=None, max_zoom=None):
+    def __init__(self, npy_path, batch_size, height, width, channels, classes, should_shuffle=True, is_debug=False, width_shift=None, height_shift=None, rotation_angle=None, shear_factor=None, zoom_factor=None):
         self.debug = is_debug
 
         if self.debug:
@@ -31,20 +32,19 @@ class MultimodalGenerator(Sequence):
         self.height_shift = height_shift
         self.rotation_angle = rotation_angle
         self.shear_factor = shear_factor
-        self.min_zoom = min_zoom
-        self.max_zoom = max_zoom
+        self.zoom_factor = zoom_factor
         self.on_epoch_end()
 
     def __len__(self):
         if self.debug:
-           print("_len__")
+            print("_len__")
         return int(np.floor(len(self.dataset) // self.batch_size))
 
     def on_epoch_end(self):
         if self.debug:
-           print("_on_epoch_end__")
+            print("_on_epoch_end__")
         self.indexes = np.arange(len(self.dataset))
-        if self.shuffle == True:
+        if self.shuffle:
             np.random.shuffle(self.indexes)
 
     def __getitem__(self, index):
@@ -55,27 +55,27 @@ class MultimodalGenerator(Sequence):
 
     def __data_generation(self, batch_array):
         if self.debug:
-           print("__data_generation__")
-           print("len(batch_array) = " + str(len(batch_array)))
+            print("__data_generation__")
+            print("len(batch_array) = " + str(len(batch_array)))
 
-        imgs_path = batch_array[:,0]
+        imgs_path = batch_array[:, 0]
         batch_img = []
-        batch_attributes = batch_array[:,range(1,21)]
+        batch_attributes = batch_array[:, range(1, 21)]
         batch_labels = batch_array[:, 21]
 
         for img_path in imgs_path:
             img = get_image(img_path, self.width, self.height)
 
-            tr = random.randint(0,3)
+            tr = random.randint(0, 3)
 
-            if tr = 0 and (self.width_shift is not None or self.height_shift is not None):
-                img = random_shift(img, self.width_shift, self.height_shift)
-            elif tr = 1 and self.rotation_angle is not None:
-                img = random_rotation(img, self.rotation_angle)
-            elif tr = 2 and self.shear_factor is not None:
-                img = random_shear(img, self.shear_factor)
-            elif tr=3 and (self.min_zoom is not None or self.max_zoom is not None):
-                img = random_zoom(img, self.min_zoom, self.max_zoom)
+            if tr == 0 and (self.width_shift is not None or self.height_shift is not None):
+                img = rnd_shift(img, self.width_shift, self.height_shift)
+            elif tr == 1 and self.rotation_angle is not None:
+                img = rnd_rotation(img, self.rotation_angle)
+            elif tr == 2 and self.shear_factor is not None:
+                img = rnd_shear(img, self.shear_factor)
+            elif tr == 3 and (self.zoom_factor is not None):
+                img = rnd_zoom(img, self.zoom_factor)
 
             batch_img.append(img)
 
