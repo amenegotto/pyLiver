@@ -1,6 +1,5 @@
 from keras.models import load_model   
 from keras.preprocessing.image import ImageDataGenerator
-from keras.optimizers import RMSprop
 from sklearn.metrics import classification_report, confusion_matrix, cohen_kappa_score
 import numpy as np
 
@@ -16,8 +15,7 @@ test_generator = test_datagen.flow_from_directory(
         target_size=(224, 224),
         batch_size=1,
         shuffle=False,
-        class_mode='categorical',
-        #color_mode='grayscale'
+        class_mode='categorical'
         )
 
 print(model.evaluate_generator(generator=test_generator, steps=30))

@@ -2,13 +2,11 @@
 # InceptionV3 fine tuning for hepatocarcinoma diagnosis through CTs images
 # with image augmentation and multimodal inputs
 
-import os
 from keras.applications.inception_v3 import InceptionV3
 from keras.models import Model
-from keras.layers import Dense, GlobalAveragePooling2D
-from keras.layers import Conv2D, MaxPooling2D, Input, concatenate
-from keras.layers import Activation, Dropout, Flatten, Dense, BatchNormalization
-from keras.preprocessing.image import ImageDataGenerator
+from keras.layers import GlobalAveragePooling2D
+from keras.layers import Input, concatenate
+from keras.layers import Dropout, Dense
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.optimizers import SGD
 import numpy as np
@@ -17,7 +15,7 @@ from ExecutionAttributes import ExecutionAttribute
 from TimeCallback import TimeCallback
 from TrainingResume import save_execution_attributes
 from keras.utils import plot_model
-from Datasets import load_data, create_image_generator, multimodal_generator_two_inputs
+from MultimodalGenerator import MultimodalGenerator
 
 # fix seed for reproducible results (only works on CPU, not GPU)
 # seed = 9
@@ -25,6 +23,7 @@ from Datasets import load_data, create_image_generator, multimodal_generator_two
 # tf.set_random_seed(seed=seed)
 
 # Summary Information
+IMG_TYPE = "sem_pre_proc/"
 SUMMARY_PATH = "/mnt/data/results"
 # SUMMARY_PATH="c:/temp/results"
 # SUMMARY_PATH="/tmp/results"
@@ -37,11 +36,11 @@ LATE_FUSION = True
 # Execution Attributes
 attr = ExecutionAttribute()
 attr.architecture = 'InceptionV3'
-numpy_path = '/mnt/data/image/2d/numpy/sem_pre_proc/'
+attr.numpy_path = '/mnt/data/image/2d/numpy/' + IMG_TYPE
+attr.path = '/mnt/data/image/2d/' + IMG_TYPE
 
 results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architecture)
 attr.summ_basename = get_base_name(results_path)
-# attr.path = '/mnt/data/image/2d/com_pre_proc'
 attr.set_dir_names()
 attr.batch_size = 32  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
 attr.epochs = 1
@@ -55,10 +54,6 @@ attr.img_width, attr.img_height = 299, 299
 
 input_attributes_s = (20,)
 
-images_train, fnames_train, attributes_train, labels_train, \
-    images_valid, fnames_valid, attributes_valid, labels_valid, \
-    images_test, fnames_test, attributes_test, labels_test = load_data(numpy_path)
-
 # Top Model Block
 glob1 = GlobalAveragePooling2D()(base_model.output)
 
@@ -69,12 +64,12 @@ if INTERMEDIATE_FUSION:
     concat = concatenate([glob1, attributes_input])
 
     hidden1 = Dense(512, activation='relu')(concat)
-    output = Dense(nb_classes, activation='softmax')(hidden1)
+    output = Dense(2, activation='softmax')(hidden1)
 
 if LATE_FUSION:
     attr.fusion = "Late Fusion"
     hidden1 = Dense(512, activation='relu')(glob1)
-    output_img = Dense(nb_classes, activation='softmax')(hidden1)
+    output_img = Dense(2, activation='softmax')(hidden1)
 
     attributes_input = Input(shape=input_attributes_s)
     hidden3 = Dense(32, activation='relu')(attributes_input)
@@ -99,28 +94,21 @@ for layer in base_model.layers:
 # compile the model (should be done *after* setting layers to non-trainable)
 attr.model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'], )
 
-# calculate steps based on number of images and batch size
-attr.train_samples = len(images_train)
-attr.valid_samples = len(images_valid)
-attr.test_samples = len(images_test)
+attr.train_generator = MultimodalGenerator(attr.numpy_path + '/train.npy', attr.batch_size, attr.img_height, attr.img_width, 3, 2, True, False, 0.2, 0.2, 15, 10, 0.2)
+attr.validation_generator = MultimodalGenerator(attr.numpy_path + '/valid.npy', attr.batch_size, attr.img_height, attr.img_width, 3, 2, True, False, 0.2, 0.2, 15, 10, 0.2)
+attr.test_generator = MultimodalGenerator(attr.numpy_path + 'test.npy', 1, attr.img_height, attr.img_width, 3, 2, True, False)
 
-train_datagen = create_image_generator(True, True)
+print("[INFO] Calculating samples and steps...")
+attr.calculate_samples_len()
 
-test_datagen = create_image_generator(True, False)
+attr.calculate_steps()
 
-attr.train_generator = multimodal_generator_two_inputs(images_train, attributes_train, labels_train, train_datagen, attr.batch_size)
-attr.validation_generator = multimodal_generator_two_inputs(images_valid, attributes_valid, labels_valid, test_datagen, attr.batch_size)
-attr.test_generator = multimodal_generator_two_inputs(images_test, attributes_test, labels_test, test_datagen, 1)
+attr.increment_seq()
 
 callbacks_top = [
     ModelCheckpoint(attr.summ_basename + "-mid-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
     EarlyStopping(monitor='val_loss', patience=10, verbose=0)
 ]
-
-# calculate steps based on number of images and batch size
-attr.calculate_steps()
-
-attr.increment_seq()
 
 # Persist execution attributes for session resume
 save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.properties')
@@ -131,6 +119,8 @@ attr.model.fit_generator(
     epochs=attr.epochs,
     validation_data=attr.validation_generator,
     validation_steps=attr.steps_valid,
+    use_multiprocessing=True,
+    workers=10,
     callbacks=callbacks_top)
 
 # at this point, the top layers are well trained and we can start fine-tuning
@@ -171,6 +161,8 @@ history = attr.model.fit_generator(
     epochs=attr.epochs,
     validation_data=attr.validation_generator,
     validation_steps=attr.steps_valid,
+    use_multiprocessing=True,
+    workers=10,
     callbacks=callbacks_list)
 
 # Save the model

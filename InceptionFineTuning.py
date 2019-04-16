@@ -75,18 +75,21 @@ attr.train_generator = train_datagen.flow_from_directory(
     attr.train_data_dir,
     target_size=(attr.img_height, attr.img_width),
     batch_size=attr.batch_size,
+    shuffle=True,
     class_mode='categorical')
 
 attr.validation_generator = test_datagen.flow_from_directory(
     attr.validation_data_dir,
     target_size=(attr.img_height, attr.img_width),
     batch_size=attr.batch_size,
+    shuffle=True,
     class_mode='categorical')
 
 attr.test_generator = test_datagen.flow_from_directory(
     attr.test_data_dir,
     target_size=(attr.img_height, attr.img_width),
     batch_size=1,
+    shuffle=False,
     class_mode='categorical')
 
 callbacks_top = [
@@ -108,6 +111,8 @@ attr.model.fit_generator(
     epochs=attr.epochs,
     validation_data=attr.validation_generator,
     validation_steps=attr.steps_valid,
+    use_multiprocessing=True,
+    workers=10,
     callbacks=callbacks_top)
 
 # at this point, the top layers are well trained and we can start fine-tuning
@@ -148,6 +153,8 @@ history = attr.model.fit_generator(
     epochs=attr.epochs,
     validation_data=attr.validation_generator,
     validation_steps=attr.steps_valid,
+    use_multiprocessing=True,
+    workers=10,
     callbacks=callbacks_list)
 
 # Save the model

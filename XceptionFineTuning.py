@@ -4,10 +4,8 @@
 
 import os
 from keras.layers import *
-from keras.optimizers import *
 from keras.applications import *
 from keras.models import Model
-from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from Summary import create_results_dir, get_base_name, plot_train_stats, write_summary_txt, copy_to_s3
 from ExecutionAttributes import ExecutionAttribute
@@ -77,6 +75,7 @@ test_datagen = create_image_generator(True, False)
 attr.train_generator = train_datagen.flow_from_directory(attr.train_data_dir,
                                                     target_size=(attr.img_width, attr.img_height),
                                                     batch_size=attr.batch_size,
+                                                    shuffle=True,
                                                     class_mode='categorical')
 
 # save and look at how the data augmentations look like
@@ -87,6 +86,7 @@ attr.train_generator = train_datagen.flow_from_directory(attr.train_data_dir,
 attr.validation_generator = test_datagen.flow_from_directory(attr.validation_data_dir,
                                                               target_size=(attr.img_width, attr.img_height),
                                                               batch_size=attr.batch_size,
+                                                              shuffle=True,
                                                               class_mode='categorical')
 
 attr.test_generator = test_datagen.flow_from_directory(
@@ -115,6 +115,8 @@ attr.model.fit_generator(attr.train_generator,
                     epochs=attr.epochs,
                     validation_data=attr.validation_generator,
                     validation_steps=attr.steps_valid,
+                    use_multiprocessing=True,
+                    workers=10,
                     callbacks=callbacks)
 
 # verbose
@@ -158,6 +160,8 @@ history = attr.model.fit_generator(attr.train_generator,
                     epochs=attr.epochs,
                     validation_data=attr.validation_generator,
                     validation_steps=attr.steps_valid,
+                    use_multiprocessing=True,
+                    workers=10,
                     callbacks=callbacks_list)
 
 

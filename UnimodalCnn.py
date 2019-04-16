@@ -2,7 +2,6 @@
 # unimodal DCNN for hepatocarcinoma computer-aided diagnosis
 # with image augmentation
 
-from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense, BatchNormalization
@@ -15,8 +14,6 @@ from TimeCallback import TimeCallback
 from Summary import plot_train_stats, create_results_dir, get_base_name, write_summary_txt, save_model, copy_to_s3
 from TrainingResume import save_execution_attributes
 import os
-import numpy as np
-import tensorflow as tf
 from keras.utils import plot_model
 from Datasets import create_image_generator
 
@@ -54,9 +51,9 @@ attr.batch_size = 32
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':
-    input_s = (1, attr.img_width, attr.img_height)
+    input_s = (3, attr.img_width, attr.img_height)
 else:
-    input_s = (attr.img_width, attr.img_height, 1)
+    input_s = (attr.img_width, attr.img_height, 3)
 
 for i in range(0, CYCLES):
     # define model
@@ -100,15 +97,13 @@ for i in range(0, CYCLES):
         target_size=(attr.img_width, attr.img_height),
         batch_size=attr.batch_size,
         shuffle=True,
-        color_mode='grayscale',
         class_mode='binary')
 
     attr.validation_generator = test_datagen.flow_from_directory(
         attr.validation_data_dir,
         target_size=(attr.img_width, attr.img_height),
         batch_size=attr.batch_size,
-        shuffle=False,
-        color_mode='grayscale',
+        shuffle=True,
         class_mode='binary')
 
     attr.test_generator = test_datagen.flow_from_directory(
@@ -116,7 +111,6 @@ for i in range(0, CYCLES):
         target_size=(attr.img_width, attr.img_height),
         batch_size=1,
         shuffle=False,
-        color_mode='grayscale',
         class_mode='binary')
 
     # calculate steps based on number of images and batch size
@@ -141,6 +135,7 @@ for i in range(0, CYCLES):
         validation_data=attr.validation_generator,
         validation_steps=attr.steps_valid,
         use_multiprocessing=True,
+        workers=10,
         callbacks=callbacks)
 
     # plot loss and accuracy

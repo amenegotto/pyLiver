@@ -1,7 +1,8 @@
 # PURPOSE:
 # multimodal DCNN for hepatocarcinoma computer-aided diagnosis
-# with image augmentation. Images, clinical attributes and labels are read from previously generated numpy arrays.
-# This implies in high memory consumption...
+# with augmentation and lightweight network architecture from scratch.
+# Images, clinical attributes and labels are read from disk in batches
+# using a custom thread-safe generator.
 
 from keras.utils import plot_model
 from keras.layers import Conv2D, MaxPooling2D, Input, concatenate
@@ -16,7 +17,7 @@ from TimeCallback import TimeCallback
 from Summary import plot_train_stats, create_results_dir, get_base_name, write_summary_txt, save_model, copy_to_s3
 from TrainingResume import save_execution_attributes
 import os
-from Datasets import load_data, create_image_generator, multimodal_flow_generator
+from MultimodalGenerator import MultimodalGenerator
 
 
 # os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin'
@@ -27,35 +28,33 @@ from Datasets import load_data, create_image_generator, multimodal_flow_generato
 # tf.set_random_seed(seed=seed)
 
 # Summary Information
+IMG_TYPE = "sem_pre_proc/"
 SUMMARY_PATH = "/mnt/data/results"
 # SUMMARY_PATH="c:/temp/results"
 # SUMMARY_PATH="/tmp/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
-INTERMEDIATE_FUSION = False
-LATE_FUSION = True
+INTERMEDIATE_FUSION = True
+LATE_FUSION = False
 
 # how many times to execute the training/validation/test cycle
 CYCLES = 1
 
-#
 # Execution Attributes
 attr = ExecutionAttribute()
 
-# numpy_path = '/home/amenegotto/dataset/2d/numpy/sem_pre_proc_mini/'
-attr.numpy_path = '/mnt/data/image/2d/numpy/sem_pre_proc/'
 # dimensions of our images.
 attr.img_width, attr.img_height = 96, 96
 
 # network parameters
-# attr.path='C:/Users/hp/Downloads/cars_train'
-# attr.path='/home/amenegotto/dataset/2d/sem_pre_proc_mini/
 attr.csv_path = 'csv/clinical_data.csv'
-# attr.path = '/mnt/data/image/2d/com_pre_proc/'
+attr.numpy_path = '/mnt/data/image/2d/numpy/' + IMG_TYPE
+# attr.numpy_path = '/home/amenegotto/dataset/2d/numpy/' + IMG_TYPE
+attr.path = '/mnt/data/image/2d/' + IMG_TYPE
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 5 
-attr.batch_size = 32
+attr.epochs = 2
+attr.batch_size = 128
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':
@@ -64,13 +63,6 @@ else:
     input_image_s = (attr.img_width, attr.img_height, 3)
 
 input_attributes_s = (20,)
-
-images_train, fnames_train, attributes_train, labels_train, \
-    images_valid, fnames_valid, attributes_valid, labels_valid, \
-    images_test, fnames_test, attributes_test, labels_test = load_data(attr.numpy_path)
-
-attr.fnames_test = fnames_test
-attr.labels_test = labels_test
 
 for i in range(0, CYCLES):
 
@@ -98,7 +90,8 @@ for i in range(0, CYCLES):
         hidden1 = Dense(256, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(concat)
         act3 = Activation('relu')(hidden1)
         drop3 = Dropout(0.40)(act3)
-        hidden2 = Dense(256, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(
+        hidden2 = Dense(256, activation='relu', kernel_initializer='he_normal',
+                        kernel_regularizer=regularizers.l2(0.0005))(
             drop3)
         drop4 = Dropout(0.40)(hidden2)
         output = Dense(1, activation='sigmoid')(drop4)
@@ -112,7 +105,7 @@ for i in range(0, CYCLES):
             drop3)
         drop4 = Dropout(0.40)(hidden2)
         output_img = Dense(1, activation='sigmoid')(drop4)
-	
+
         attributes_input = Input(shape=input_attributes_s)
         hidden3 = Dense(32, activation='relu')(attributes_input)
         drop6 = Dropout(0.2)(hidden3)
@@ -133,11 +126,12 @@ for i in range(0, CYCLES):
                   optimizer=RMSprop(lr=0.000001),
                   metrics=['accuracy'])
 
+    attr.train_generator = MultimodalGenerator(attr.numpy_path + '/train.npy', attr.batch_size, attr.img_height, attr.img_width, 3, 2, True, False, 0.2, 0.2, 15, 10, 0.2)
+    attr.validation_generator = MultimodalGenerator(attr.numpy_path + '/valid.npy', attr.batch_size, attr.img_height, attr.img_width, 3, 2, True, False, 0.2, 0.2, 15, 10, 0.2)
+    attr.test_generator = MultimodalGenerator(attr.numpy_path + 'test.npy', 1, attr.img_height, attr.img_width, 3, 2, True, False)
 
-    # calculate steps based on number of images and batch size
-    attr.train_samples = len(images_train)
-    attr.valid_samples = len(images_valid)
-    attr.test_samples = len(images_test)
+    print("[INFO] Calculating samples and steps...")
+    attr.calculate_samples_len()
 
     attr.calculate_steps()
 
@@ -146,23 +140,12 @@ for i in range(0, CYCLES):
     # Persist execution attributes for session resume
     save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.properties')
 
-    # this is the augmentation configuration we will use for training
-    train_datagen = create_image_generator(False, True)
-
-    # this is the augmentation configuration we will use for testing:
-    # nothing is done.
-    test_datagen = create_image_generator(False, False)
-
-    attr.train_generator = multimodal_flow_generator(images_train, attributes_train, labels_train, train_datagen, attr.batch_size)
-    attr.validation_generator = multimodal_flow_generator(images_valid, attributes_valid, labels_valid, test_datagen, attr.batch_size)
-    attr.test_generator = multimodal_flow_generator(images_test, attributes_test, labels_test, test_datagen, 1)
-
     time_callback = TimeCallback()
 
-    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=10, mode='max', restore_best_weights=True),
+    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=3, mode='max', restore_best_weights=True),
                  ModelCheckpoint(attr.curr_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
 
-
+   
     # training time
     history = attr.model.fit_generator(
         attr.train_generator,
@@ -171,6 +154,7 @@ for i in range(0, CYCLES):
         validation_data=attr.validation_generator,
         validation_steps=attr.steps_valid,
         use_multiprocessing=True,
+        workers=10,
         callbacks=callbacks)
 
     # plot loss and accuracy
@@ -190,5 +174,5 @@ for i in range(0, CYCLES):
 
     K.clear_session()
 
-copy_to_s3(attr)
+# copy_to_s3(attr)
 # os.system("sudo poweroff")

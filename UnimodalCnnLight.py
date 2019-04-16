@@ -2,7 +2,6 @@
 # unimodal DCNN for hepatocarcinoma computer-aided diagnosis
 # with image augmentation, lightweight network architecture from scratch
 
-from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense, BatchNormalization
@@ -13,8 +12,6 @@ from keras import regularizers
 from ExecutionAttributes import ExecutionAttribute
 from TimeCallback import TimeCallback
 from Summary import plot_train_stats, create_results_dir, get_base_name, write_summary_txt, save_model, copy_to_s3
-import tensorflow as tf
-import numpy as np
 import os
 from TrainingResume import save_execution_attributes
 from keras.utils import plot_model
@@ -54,9 +51,9 @@ attr.batch_size = 256
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':
-    input_s = (1, attr.img_width, attr.img_height)
+    input_s = (3, attr.img_width, attr.img_height)
 else:
-    input_s = (attr.img_width, attr.img_height, 1)
+    input_s = (attr.img_width, attr.img_height, 3)
 
 for i in range(0, CYCLES):
     # define model
@@ -113,15 +110,13 @@ for i in range(0, CYCLES):
         target_size=(attr.img_width, attr.img_height),
         batch_size=attr.batch_size,
         shuffle=True,
-        color_mode='grayscale',
         class_mode='binary')
 
     attr.validation_generator = test_datagen.flow_from_directory(
         attr.validation_data_dir,
         target_size=(attr.img_width, attr.img_height),
         batch_size=attr.batch_size,
-        shuffle=False,
-        color_mode='grayscale',
+        shuffle=True,
         class_mode='binary')
 
     attr.test_generator = test_datagen.flow_from_directory(
@@ -152,7 +147,8 @@ for i in range(0, CYCLES):
         epochs=attr.epochs,
         validation_data=attr.validation_generator,
         validation_steps=attr.steps_valid,
-        use_multiprocessing=False,
+        use_multiprocessing=True,
+        workers=10,
         callbacks=callbacks)
 
     # plot loss and accuracy

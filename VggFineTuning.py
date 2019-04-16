@@ -8,13 +8,11 @@ from keras.applications import VGG19
 from keras import models
 from keras import layers
 from keras import optimizers
-from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from Summary import create_results_dir, get_base_name, plot_train_stats, write_summary_txt, copy_to_s3
 from ExecutionAttributes import ExecutionAttribute
 from TimeCallback import TimeCallback
 from TrainingResume import save_execution_attributes
-import tensorflow as tf
 from keras.utils import plot_model
 from Datasets import create_image_generator
 
@@ -81,7 +79,8 @@ attr.train_generator = train_datagen.flow_from_directory(
     attr.train_data_dir,
     target_size=(attr.img_height, attr.img_width),
     batch_size=attr.batch_size,
-    class_mode='categorical')
+    class_mode='categorical',
+    shuffle=True)
 
 # Create a generator for prediction
 attr.validation_generator = test_datagen.flow_from_directory(
@@ -89,7 +88,7 @@ attr.validation_generator = test_datagen.flow_from_directory(
         target_size=(attr.img_height, attr.img_width),
         batch_size=attr.batch_size,
         class_mode='categorical',
-        shuffle=False)
+        shuffle=True)
 
 attr.test_generator = test_datagen.flow_from_directory(
         attr.test_data_dir,
@@ -122,6 +121,8 @@ history = attr.model.fit_generator(
       validation_data=attr.validation_generator,
       validation_steps=attr.steps_valid,
       callbacks=callbacks,
+      use_multiprocessing=True,
+      workers=10,
       verbose=1)
 
 # Save the model

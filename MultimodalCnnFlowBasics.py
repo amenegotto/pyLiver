@@ -1,25 +1,18 @@
 # PURPOSE:
 # first experiments with a multimodal CNN architecture
 
-from keras.preprocessing.image import ImageDataGenerator
 from keras.models import Model
 from keras.layers import Input, Conv2D, MaxPooling2D, concatenate
 from keras.layers import Activation, Dropout, Flatten, Dense, BatchNormalization
 from keras import backend as K
 from keras.optimizers import RMSprop, Adam
-from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras import regularizers
 from ExecutionAttributes import ExecutionAttribute
-from keras.utils import plot_model
-from skimage import io as io
 import cv2
 import os
 import pandas as pd
 import numpy as np
 from sklearn.metrics import classification_report, confusion_matrix, cohen_kappa_score, roc_auc_score, roc_curve
-from sklearn.metrics import precision_recall_fscore_support as score
 from keras.preprocessing.image import load_img, img_to_array
-from sklearn.preprocessing import LabelEncoder
 
 os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin'
 

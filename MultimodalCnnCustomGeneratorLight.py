@@ -1,6 +1,6 @@
 # PURPOSE:
 # multimodal DCNN for hepatocarcinoma computer-aided diagnosis
-# without augmentation and lightweight network architecture from scratch.
+# with augmentation and lightweight network architecture from scratch.
 # Images, clinical attributes and labels are read from disk in batches
 # using a custom thread-safe generator.
 
