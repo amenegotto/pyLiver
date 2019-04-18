@@ -36,7 +36,7 @@ results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architec
 attr.summ_basename = get_base_name(results_path)
 attr.path = '/mnt/data/image/2d/com_pre_proc'
 attr.set_dir_names()
-attr.batch_size = 256 
+attr.batch_size = 128 
 attr.epochs = 1 
 
 attr.img_width = 224
@@ -156,5 +156,5 @@ with open(attr.summ_basename + "-predicts.txt", "a") as f:
 
 write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks[1].stopped_epoch)
 
-copy_to_s3(attr)
+# copy_to_s3(attr)
 # os.system("sudo poweroff")

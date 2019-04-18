@@ -28,15 +28,15 @@ from MultimodalGenerator import MultimodalGenerator
 # tf.set_random_seed(seed=seed)
 
 # Summary Information
-IMG_TYPE = "sem_pre_proc/"
+IMG_TYPE = "com_pre_proc/"
 SUMMARY_PATH = "/mnt/data/results"
 # SUMMARY_PATH="c:/temp/results"
 # SUMMARY_PATH="/tmp/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
-INTERMEDIATE_FUSION = True
-LATE_FUSION = False
+INTERMEDIATE_FUSION = False
+LATE_FUSION = True
 
 # how many times to execute the training/validation/test cycle
 CYCLES = 1
@@ -128,7 +128,7 @@ for i in range(0, CYCLES):
 
     attr.train_generator = MultimodalGenerator(attr.numpy_path + '/train.npy', attr.batch_size, attr.img_height, attr.img_width, 3, 2, True, False, 0.2, 0.2, 15, 10, 0.2)
     attr.validation_generator = MultimodalGenerator(attr.numpy_path + '/valid.npy', attr.batch_size, attr.img_height, attr.img_width, 3, 2, True, False, 0.2, 0.2, 15, 10, 0.2)
-    attr.test_generator = MultimodalGenerator(attr.numpy_path + 'test.npy', 1, attr.img_height, attr.img_width, 3, 2, True, False)
+    attr.test_generator = MultimodalGenerator(attr.numpy_path + '/test.npy', 1, attr.img_height, attr.img_width, 3, 2, False, False)
 
     print("[INFO] Calculating samples and steps...")
     attr.calculate_samples_len()

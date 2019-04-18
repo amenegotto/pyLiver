@@ -23,7 +23,7 @@ from MultimodalGenerator import MultimodalGenerator
 #tf.set_random_seed(seed=seed)
 
 # Summary Information
-IMG_TYPE = "sem_pre_proc/"
+IMG_TYPE = "com_pre_proc/"
 SUMMARY_PATH = "/mnt/data/results"
 # SUMMARY_PATH="c:/temp/results"
 # SUMMARY_PATH="/tmp/results"
@@ -37,8 +37,8 @@ LATE_FUSION = False
 attr = ExecutionAttribute()
 attr.architecture = 'vgg19'
 attr.csv_path = 'csv/clinical_data.csv'
-# numpy_path = '/mnt/data/image/2d/numpy/' + IMG_TYPE
-attr.numpy_path = '/home/amenegotto/dataset/2d/numpy/' + IMG_TYPE
+attr.numpy_path = '/mnt/data/image/2d/numpy/' + IMG_TYPE
+# attr.numpy_path = '/home/amenegotto/dataset/2d/numpy/' + IMG_TYPE
 attr.path = '/mnt/data/image/2d/' + IMG_TYPE
 
 results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architecture)
@@ -99,7 +99,7 @@ plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
 
 attr.train_generator = MultimodalGenerator(attr.numpy_path + '/train.npy', attr.batch_size, attr.img_height, attr.img_width, 3, 2, True, False, 0.2, 0.2, 15, 10, 0.2)
 attr.validation_generator = MultimodalGenerator(attr.numpy_path + '/valid.npy', attr.batch_size, attr.img_height, attr.img_width, 3, 2, True, False, 0.2, 0.2, 15, 10, 0.2)
-attr.test_generator = MultimodalGenerator(attr.numpy_path + 'test.npy', 1, attr.img_height, attr.img_width, 3, 2, True, False)
+attr.test_generator = MultimodalGenerator(attr.numpy_path + '/test.npy', 1, attr.img_height, attr.img_width, 3, 2, False, False)
 
 print("[INFO] Calculating samples and steps...")
 attr.calculate_samples_len()

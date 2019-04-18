@@ -116,12 +116,12 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
             f.write('\nClasses: \n')
             print(classes, file=f)
 
-            mtx = confusion_matrix(classes, y_pred)
+            mtx = confusion_matrix(classes, y_pred, labels=[1, 0])
             print('Confusion Matrix:')
             print(mtx)
             f.write('\n\nConfusion Matrix:\n')
-            f.write('TP   FP\n')
-            f.write('FN   TN\n')
+            f.write('TP   FN\n')
+            f.write('FP   TN\n')
             print(mtx, file=f)
 
             plt.imshow(mtx, cmap='binary', interpolation='None')
@@ -177,8 +177,8 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
             print('Confusion Matrix:')
             print(mtx)
             f.write('\n\nConfusion Matrix:\n')
-            f.write('TP   FP\n')
-            f.write('FN   TN\n')
+            f.write('TP   FN\n')
+            f.write('FP   TN\n')
             print(mtx, file=f)
 
             plt.imshow(mtx, cmap='binary', interpolation='None')
@@ -263,6 +263,9 @@ def write_csv_test_result(execattr: ExecutionAttribute, score_gen, y_pred, mtx, 
             csv.write('Test Loss, Test Accuracy, TP, FP, TN, FN, Precision, Recall, F-Score, Support, Stopped Epoch\n')
 
         precision, recall, fscore, support = score(classes, y_pred, average='macro')
+
+        if stopped_epoch == 0:
+            stopped_epoch = execattr.epochs
 
         csv.write(str(score_gen[0]) + ',' + str(score_gen[1]) + ',' + str(mtx[0, 0]) + ',' + str(mtx[1, 0]) + ',' + str(
             mtx[1, 1]) + ',' + str(mtx[0, 1]) + ',' + str(precision) + ',' + str(recall) + ',' + str(

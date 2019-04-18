@@ -46,8 +46,8 @@ attr.img_width, attr.img_height = 96, 96
 # attr.path='/home/amenegotto/dataset/2d/com_pre_proc/'
 attr.path = '/mnt/data/image/2d/com_pre_proc'
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 1 
-attr.batch_size = 256
+attr.epochs = 3 
+attr.batch_size = 64
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':
@@ -82,7 +82,6 @@ for i in range(0, CYCLES):
 
     attr.model.add(Flatten())  # this converts our 3D feature maps to 1D feature vectors
     attr.model.add(Dense(512, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
-    attr.model.add(BatchNormalization())
     attr.model.add(Activation('relu'))
     attr.model.add(Dropout(0.40))
     attr.model.add(Dense(1024, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005)))
@@ -124,7 +123,6 @@ for i in range(0, CYCLES):
         target_size=(attr.img_width, attr.img_height),
         batch_size=1,
         shuffle=False,
-        color_mode='grayscale',
         class_mode='binary')
 
     # calculate steps based on number of images and batch size

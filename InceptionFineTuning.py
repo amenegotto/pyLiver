@@ -5,7 +5,7 @@
 import os
 from keras.applications.inception_v3 import InceptionV3
 from keras.models import Model
-from keras.layers import Dense, GlobalAveragePooling2D
+from keras.layers import Dense, GlobalAveragePooling2D, Dropout
 from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.optimizers import SGD
@@ -52,8 +52,10 @@ x = base_model.output
 x = GlobalAveragePooling2D()(x)
 # let's add a fully-connected layer
 x = Dense(1024, activation='relu')(x)
+drop = Dropout(0.50)(x)
+
 # and a logistic layer -- we have 2 classes
-predictions = Dense(2, activation='softmax')(x)
+predictions = Dense(2, activation='softmax')(drop)
 
 # this is the model we will train
 attr.model = Model(inputs=base_model.input, outputs=predictions)
@@ -188,4 +190,4 @@ with open(attr.summ_basename + "-predicts.txt", "a") as f:
 
 write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks_list[2].stopped_epoch)
 
-copy_to_s3(attr)
+# copy_to_s3(attr)

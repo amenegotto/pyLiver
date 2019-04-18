@@ -23,15 +23,15 @@ from MultimodalGenerator import MultimodalGenerator
 # tf.set_random_seed(seed=seed)
 
 # Summary Information
-IMG_TYPE = "sem_pre_proc/"
+IMG_TYPE = "com_pre_proc/"
 SUMMARY_PATH = "/mnt/data/results"
 # SUMMARY_PATH="c:/temp/results"
 # SUMMARY_PATH="/tmp/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
-INTERMEDIATE_FUSION = False
-LATE_FUSION = True
+INTERMEDIATE_FUSION = True
+LATE_FUSION = False
 
 # Execution Attributes
 attr = ExecutionAttribute()
@@ -64,12 +64,14 @@ if INTERMEDIATE_FUSION:
     concat = concatenate([glob1, attributes_input])
 
     hidden1 = Dense(512, activation='relu')(concat)
-    output = Dense(2, activation='softmax')(hidden1)
+    drop = Dropout(0.3)(hidden1)
+    output = Dense(2, activation='softmax')(drop)
 
 if LATE_FUSION:
     attr.fusion = "Late Fusion"
     hidden1 = Dense(512, activation='relu')(glob1)
-    output_img = Dense(2, activation='softmax')(hidden1)
+    drop = Dropout(0.3)(hidden1)
+    output_img = Dense(2, activation='softmax')(drop)
 
     attributes_input = Input(shape=input_attributes_s)
     hidden3 = Dense(32, activation='relu')(attributes_input)
@@ -96,7 +98,7 @@ attr.model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics
 
 attr.train_generator = MultimodalGenerator(attr.numpy_path + '/train.npy', attr.batch_size, attr.img_height, attr.img_width, 3, 2, True, False, 0.2, 0.2, 15, 10, 0.2)
 attr.validation_generator = MultimodalGenerator(attr.numpy_path + '/valid.npy', attr.batch_size, attr.img_height, attr.img_width, 3, 2, True, False, 0.2, 0.2, 15, 10, 0.2)
-attr.test_generator = MultimodalGenerator(attr.numpy_path + 'test.npy', 1, attr.img_height, attr.img_width, 3, 2, True, False)
+attr.test_generator = MultimodalGenerator(attr.numpy_path + '/test.npy', 1, attr.img_height, attr.img_width, 3, 2, False, False)
 
 print("[INFO] Calculating samples and steps...")
 attr.calculate_samples_len()

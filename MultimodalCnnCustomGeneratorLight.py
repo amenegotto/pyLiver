@@ -28,15 +28,15 @@ from MultimodalGenerator import MultimodalGenerator
 # tf.set_random_seed(seed=seed)
 
 # Summary Information
-IMG_TYPE = "sem_pre_proc/"
+IMG_TYPE = "com_pre_proc/"
 SUMMARY_PATH = "/mnt/data/results"
 # SUMMARY_PATH="c:/temp/results"
 # SUMMARY_PATH="/tmp/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
-INTERMEDIATE_FUSION = True
-LATE_FUSION = False
+INTERMEDIATE_FUSION = False
+LATE_FUSION = True
 
 # how many times to execute the training/validation/test cycle
 CYCLES = 1
@@ -98,10 +98,8 @@ for i in range(0, CYCLES):
         attributes_input = Input(shape=input_attributes_s)
         concat = concatenate([flat, attributes_input])
 
-        hidden1 = Dense(512, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(concat)
-        bn5 = BatchNormalization()(hidden1)
-        act6 = Activation('relu')(bn5)
-        drop5 = Dropout(0.40)(act6)
+        hidden1 = Dense(512, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(concat)
+        drop5 = Dropout(0.40)(hidden1)
         hidden2 = Dense(1024, activation='relu', kernel_initializer='he_normal',
                         kernel_regularizer=regularizers.l2(0.0005))(drop5)
         drop6 = Dropout(0.40)(hidden2)
@@ -110,10 +108,8 @@ for i in range(0, CYCLES):
     if LATE_FUSION:
         attr.fusion = "Late Fusion"
 
-        hidden1 = Dense(512, kernel_regularizer=regularizers.l2(0.0005))(flat)
-        bn5 = BatchNormalization()(hidden1)
-        act6 = Activation('relu')(bn5)
-        drop5 = Dropout(0.40)(act6)
+        hidden1 = Dense(512, activation='relu', kernel_regularizer=regularizers.l2(0.0005))(flat)
+        drop5 = Dropout(0.40)(hidden1)
         hidden2 = Dense(1024, activation='relu', kernel_initializer='he_normal')(drop5)
         drop6 = Dropout(0.40)(hidden2)
         output_img = Dense(1, activation='sigmoid')(drop6)
@@ -135,12 +131,12 @@ for i in range(0, CYCLES):
 
     # compile model using accuracy as main metric, rmsprop (gradient descendent)
     attr.model.compile(loss='binary_crossentropy',
-                  optimizer=RMSprop(lr=0.000001),
+                  optimizer=RMSprop(lr=0.00001),
                   metrics=['accuracy'])
 
     attr.train_generator = MultimodalGenerator(attr.numpy_path + '/train.npy', attr.batch_size, attr.img_height, attr.img_width, 3, 2, True, False, 0.2, 0.2, 15, 10, 0.2)
     attr.validation_generator = MultimodalGenerator(attr.numpy_path + '/valid.npy', attr.batch_size, attr.img_height, attr.img_width, 3, 2, True, False, 0.2, 0.2, 15, 10, 0.2)
-    attr.test_generator = MultimodalGenerator(attr.numpy_path + 'test.npy', 1, attr.img_height, attr.img_width, 3, 2, True, False)
+    attr.test_generator = MultimodalGenerator(attr.numpy_path + 'test.npy', 1, attr.img_height, attr.img_width, 3, 2, False, False)
 
     print("[INFO] Calculating samples and steps...")
     attr.calculate_samples_len()

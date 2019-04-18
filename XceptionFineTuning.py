@@ -50,7 +50,8 @@ base_model = Xception(input_shape=(attr.img_width, attr.img_height, 3), weights=
 # Top Model Block
 x = GlobalAveragePooling2D()(base_model.output)
 hidden1 = Dense(512, activation='relu')(x)
-predictions = Dense(nb_classes, activation='softmax')(hidden1)
+drop = Dropout(0.30)(hidden1)
+predictions = Dense(nb_classes, activation='softmax')(drop)
 
 # add your top layer block to your base model
 attr.model = Model(base_model.input, predictions)
@@ -196,5 +197,5 @@ with open(attr.summ_basename + "-predicts.txt", "a") as f:
 
 write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks_list[2].stopped_epoch)
 
-copy_to_s3(attr)
+#copy_to_s3(attr)
 # os.system("sudo poweroff")
