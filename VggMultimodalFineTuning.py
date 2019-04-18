@@ -197,5 +197,5 @@ with open(attr.summ_basename + "-predicts.txt", "a") as f:
 
 write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks[1].stopped_epoch)
 
-copy_to_s3(attr)
+#copy_to_s3(attr)
 # os.system("sudo poweroff")
