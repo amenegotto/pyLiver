@@ -156,7 +156,7 @@ def create_data_as_numpy(images_path, csv_path, img_width, img_height, show_info
     print("Done!")
 
 
-def create_data_as_list(images_path, csv_path, show_info: False, npy_path):
+def create_data_as_list(images_path, csv_path, show_info: False, npy_path, is_categorical):
     train = []
     valid = []
     test = []
@@ -193,7 +193,11 @@ def create_data_as_list(images_path, csv_path, show_info: False, npy_path):
                 mid_array = np.hstack((np.array(path_array), patient_data.values.ravel()))
 
                 if img_info[1] == "ok":
-                    row = np.hstack((mid_array, np.array([1])))
+                    if is_categorical == False:
+                        row = np.hstack((mid_array, np.array([1])))
+                    else:
+                        row = np.hstack((mid_array, np.array([1, 0])))
+
                     if img_info[0] == "train":
                         train.append(row)
                     elif img_info[0] == "valid":
@@ -203,7 +207,11 @@ def create_data_as_list(images_path, csv_path, show_info: False, npy_path):
                     else:
                         print("Error: " + absolute_path + " - " + patient_id)
                 elif img_info[1] == "nok":
-                    row = np.hstack((mid_array, np.array([0])))
+                    if is_categorical == False:
+                        row = np.hstack((mid_array, np.array([0])))
+                    else:
+                        row = np.hstack((mid_array, np.array([0, 1])))
+
                     if img_info[0] == "train":
                         train.append(row)
                     elif img_info[0] == "valid":
@@ -220,9 +228,14 @@ def create_data_as_list(images_path, csv_path, show_info: False, npy_path):
     np_valid = np.array(valid)
     np_test = np.array(test)
 
-    np.save(npy_path + 'train.npy', np_train)
-    np.save(npy_path + 'valid.npy', np_valid)
-    np.save(npy_path + 'test.npy', np_test)
+    if is_categorical:
+        np.save(npy_path + 'train-categorical.npy', np_train)
+        np.save(npy_path + 'valid-categorical.npy', np_train)
+        np.save(npy_path + 'test-categorical.npy', np_train)
+    else:
+        np.save(npy_path + 'train.npy', np_train)
+        np.save(npy_path + 'valid.npy', np_valid)
+        np.save(npy_path + 'test.npy', np_test)
 
     if show_info:
         print("------------------------------------------")

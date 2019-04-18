@@ -10,7 +10,7 @@ import random
 
 class MultimodalGenerator(Sequence):
     
-    def __init__(self, npy_path, batch_size, height, width, channels, classes, should_shuffle=True, is_debug=False, width_shift=None, height_shift=None, rotation_angle=None, shear_factor=None, zoom_factor=None):
+    def __init__(self, npy_path, batch_size, height, width, channels, classes, should_shuffle=True, is_categorical = False, is_debug=False, width_shift=None, height_shift=None, rotation_angle=None, shear_factor=None, zoom_factor=None):
         self.debug = is_debug
 
         if self.debug:
@@ -61,7 +61,10 @@ class MultimodalGenerator(Sequence):
         imgs_path = batch_array[:, 0]
         batch_img = []
         batch_attributes = batch_array[:, range(1, 21)]
-        batch_labels = batch_array[:, 21]
+        if is_categorical:
+            batch_labels = batch_array[:, range(21,23)]
+        else:
+            batch_labels = batch_array[:, 21]
 
         for img_path in imgs_path:
             img = get_image(img_path, self.width, self.height)

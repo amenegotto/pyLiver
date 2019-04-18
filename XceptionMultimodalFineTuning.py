@@ -91,9 +91,48 @@ attr.model = Model(inputs=[base_model.input, attributes_input], outputs=output)
 
 plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
 
-attr.train_generator = MultimodalGenerator(attr.numpy_path + '/train.npy', attr.batch_size, attr.img_height, attr.img_width, 3, 2, True, False, 0.2, 0.2, 15, 10, 0.2)
-attr.validation_generator = MultimodalGenerator(attr.numpy_path + '/valid.npy', attr.batch_size, attr.img_height, attr.img_width, 3, 2, True, False, 0.2, 0.2, 15, 10, 0.2)
-attr.test_generator = MultimodalGenerator(attr.numpy_path + 'test.npy', 1, attr.img_height, attr.img_width, 3, 2, True, False)
+attr.train_generator = MultimodalGenerator(
+            npy_path = attr.numpy_path + '/train-categorical.npy', 
+            batch_size = attr.batch_size, 
+            height = attr.img_height, 
+            width = attr.img_width, 
+            channels = 3, 
+            classes = 2, 
+            should_shuffle = True,
+            is_categorical = True, 
+            is_debug = False, 
+            width_shift = 0.2, 
+            height_shift = 0.2, 
+            rotation_angle = 15, 
+            shear_factor = 10, 
+            zoom_factor = 0.2)
+
+attr.validation_generator = MultimodalGenerator(
+            npy_path = attr.numpy_path + '/valid-categorical.npy', 
+            batch_size = attr.batch_size, 
+            height = attr.img_height, 
+            width = attr.img_width, 
+            channels = 3, 
+            classes = 2, 
+            should_shuffle = True,
+            is_categorical = True, 
+            is_debug = False, 
+            width_shift = 0.2, 
+            height_shift = 0.2, 
+            rotation_angle = 15, 
+            shear_factor = 10, 
+            zoom_factor = 0.2)
+
+attr.test_generator = MultimodalGenerator(
+            npy_path = attr.numpy_path + '/test-categorical.npy', 
+            batch_size = 1, 
+            height = attr.img_height, 
+            width = attr.img_width, 
+            channels = 3, 
+            classes = 2, 
+            should_shuffle = False,
+            is_categorical = True, 
+            is_debug = False)
 
 print("[INFO] Calculating samples and steps...")
 attr.calculate_samples_len()
