@@ -28,15 +28,15 @@ from MultimodalGenerator import MultimodalGenerator
 # tf.set_random_seed(seed=seed)
 
 # Summary Information
-IMG_TYPE = "com_pre_proc/"
+IMG_TYPE = "sem_pre_proc/"
 SUMMARY_PATH = "/mnt/data/results"
 # SUMMARY_PATH="c:/temp/results"
 # SUMMARY_PATH="/tmp/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
-INTERMEDIATE_FUSION = False
-LATE_FUSION = True
+INTERMEDIATE_FUSION = True
+LATE_FUSION = False
 
 # how many times to execute the training/validation/test cycle
 CYCLES = 1
@@ -53,8 +53,8 @@ attr.numpy_path = '/mnt/data/image/2d/numpy/' + IMG_TYPE
 # attr.numpy_path = '/home/amenegotto/dataset/2d/numpy/' + IMG_TYPE
 attr.path = '/mnt/data/image/2d/' + IMG_TYPE
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 2
-attr.batch_size = 128
+attr.epochs = 20
+attr.batch_size = 256
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':
@@ -109,7 +109,7 @@ for i in range(0, CYCLES):
         attr.fusion = "Late Fusion"
 
         hidden1 = Dense(512, activation='relu', kernel_regularizer=regularizers.l2(0.0005))(flat)
-        drop5 = Dropout(0.40)(hidden1)
+        drop5 = Dropout(0.25)(hidden1)
         hidden2 = Dense(1024, activation='relu', kernel_initializer='he_normal')(drop5)
         drop6 = Dropout(0.40)(hidden2)
         output_img = Dense(1, activation='sigmoid')(drop6)
@@ -122,8 +122,9 @@ for i in range(0, CYCLES):
         output_attributes = Dense(1, activation='sigmoid')(drop7)
 
         concat = concatenate([output_img, output_attributes])
-        hidden5 = Dense(4, activation='relu')(concat)
-        output = Dense(1, activation='sigmoid')(hidden5)
+        hidden5 = Dense(8, activation='relu')(concat)
+        drop8 = Dropout(0.1)(hidden5)
+        output = Dense(1, activation='sigmoid')(drop8)
 
     attr.model = Model(inputs=[visible, attributes_input], outputs=output)
 
@@ -131,7 +132,7 @@ for i in range(0, CYCLES):
 
     # compile model using accuracy as main metric, rmsprop (gradient descendent)
     attr.model.compile(loss='binary_crossentropy',
-                  optimizer=RMSprop(lr=0.00001),
+                  optimizer=RMSprop(lr=0.0001),
                   metrics=['accuracy'])
 
     attr.train_generator = MultimodalGenerator(
@@ -189,7 +190,7 @@ for i in range(0, CYCLES):
 
     time_callback = TimeCallback()
 
-    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=3, mode='max', restore_best_weights=True),
+    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=5, mode='max', restore_best_weights=True),
                  ModelCheckpoint(attr.curr_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
 
    

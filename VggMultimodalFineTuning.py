@@ -23,7 +23,7 @@ from MultimodalGenerator import MultimodalGenerator
 #tf.set_random_seed(seed=seed)
 
 # Summary Information
-IMG_TYPE = "com_pre_proc/"
+IMG_TYPE = "sem_pre_proc/"
 SUMMARY_PATH = "/mnt/data/results"
 # SUMMARY_PATH="c:/temp/results"
 # SUMMARY_PATH="/tmp/results"
@@ -44,8 +44,8 @@ attr.path = '/mnt/data/image/2d/' + IMG_TYPE
 results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architecture)
 attr.summ_basename = get_base_name(results_path)
 attr.set_dir_names()
-attr.batch_size = 32
-attr.epochs = 1 
+attr.batch_size = 64
+attr.epochs = 20 
 
 attr.img_width = 224
 attr.img_height = 224

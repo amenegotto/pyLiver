@@ -44,7 +44,7 @@ attr.summ_basename = get_base_name(results_path)
 
 attr.set_dir_names()
 attr.batch_size = 64  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
-attr.epochs = 1
+attr.epochs = 10
 
 # hyper parameters for model
 nb_classes = 2  # number of classes
@@ -68,12 +68,14 @@ if INTERMEDIATE_FUSION:
     concat = concatenate([glob1, attributes_input])
 
     hidden1 = Dense(512, activation='relu')(concat)
-    output = Dense(nb_classes, activation='softmax')(hidden1)
+    drop3 = Dropout(0.50)(hidden1)
+    output = Dense(nb_classes, activation='softmax')(drop3)
 
 if LATE_FUSION:
     attr.fusion = "Late Fusion"
     hidden1 = Dense(512, activation='relu')(glob1)
-    output_img = Dense(nb_classes, activation='softmax')(hidden1)
+    drop3 = Dropout(0.40)(hidden1)
+    output_img = Dense(nb_classes, activation='softmax')(drop3)
 
     attributes_input = Input(shape=input_attributes_s)
     hidden3 = Dense(32, activation='relu')(attributes_input)
@@ -161,7 +163,7 @@ for layer in base_model.layers:
 
 callbacks = [
     ModelCheckpoint(attr.summ_basename + "-mid-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-    EarlyStopping(monitor='val_loss', patience=10, verbose=0)
+    EarlyStopping(monitor='val_loss', patience=3, verbose=0)
 ]
 
 attr.model.compile(optimizer='nadam', loss='categorical_crossentropy', metrics=['accuracy'])
@@ -247,5 +249,5 @@ with open(attr.summ_basename + "-predicts.txt", "a") as f:
 
 write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks_list[2].stopped_epoch)
 
-copy_to_s3(attr)
+# copy_to_s3(attr)
 # os.system("sudo poweroff")
