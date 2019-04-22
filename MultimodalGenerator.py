@@ -33,6 +33,7 @@ class MultimodalGenerator(Sequence):
         self.rotation_angle = rotation_angle
         self.shear_factor = shear_factor
         self.zoom_factor = zoom_factor
+        self.is_categorical = is_categorical
         self.on_epoch_end()
 
     def __len__(self):
@@ -61,7 +62,7 @@ class MultimodalGenerator(Sequence):
         imgs_path = batch_array[:, 0]
         batch_img = []
         batch_attributes = batch_array[:, range(1, 21)]
-        if is_categorical:
+        if self.is_categorical:
             batch_labels = batch_array[:, range(21,23)]
         else:
             batch_labels = batch_array[:, 21]

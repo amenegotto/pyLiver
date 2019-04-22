@@ -230,8 +230,8 @@ def create_data_as_list(images_path, csv_path, show_info: False, npy_path, is_ca
 
     if is_categorical:
         np.save(npy_path + 'train-categorical.npy', np_train)
-        np.save(npy_path + 'valid-categorical.npy', np_train)
-        np.save(npy_path + 'test-categorical.npy', np_train)
+        np.save(npy_path + 'valid-categorical.npy', np_valid)
+        np.save(npy_path + 'test-categorical.npy', np_test)
     else:
         np.save(npy_path + 'train.npy', np_train)
         np.save(npy_path + 'valid.npy', np_valid)
