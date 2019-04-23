@@ -34,6 +34,7 @@ class MultimodalGenerator(Sequence):
         self.shear_factor = shear_factor
         self.zoom_factor = zoom_factor
         self.is_categorical = is_categorical
+        self.batch_index = 0    
         self.on_epoch_end()
 
     def __len__(self):

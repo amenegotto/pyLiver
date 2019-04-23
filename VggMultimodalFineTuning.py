@@ -182,6 +182,9 @@ attr.model.save(attr.summ_basename + '-weights.h5')
 # Plot train stats
 plot_train_stats(history, attr.summ_basename + '-training_loss.png', attr.summ_basename + '-training_accuracy.png')
 
+# Reset test generator before raw predictions
+attr.test_generator.reset()
+
 # Get the filenames from the generator
 fnames = attr.fnames_test
 
@@ -198,6 +201,9 @@ with open(attr.summ_basename + "-predicts.txt", "a") as f:
     f.write(res)
     print(res)
     f.close()
+
+# Reset test generator before summary predictions
+attr.test_generator.reset()
 
 write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks[1].stopped_epoch)
 

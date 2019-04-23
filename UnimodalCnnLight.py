@@ -16,7 +16,7 @@ import os
 from TrainingResume import save_execution_attributes
 from keras.utils import plot_model
 from Datasets import create_image_generator
-
+import multiprocessing
 
 # fix seed for reproducible results (only works on CPU, not GPU)
 #seed = 9
@@ -146,7 +146,7 @@ for i in range(0, CYCLES):
         validation_data=attr.validation_generator,
         validation_steps=attr.steps_valid,
         use_multiprocessing=True,
-        workers=10,
+        workers=multiprocessing.cpu_count() - 1,
         callbacks=callbacks)
 
     # plot loss and accuracy
