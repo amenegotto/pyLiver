@@ -15,12 +15,16 @@ from TimeCallback import TimeCallback
 from TrainingResume import save_execution_attributes
 from keras.utils import plot_model
 from MultimodalGenerator import MultimodalGenerator
-
+import multiprocessing
+import os
 
 # fix seed for reproducible results (only works on CPU, not GPU)
 #seed = 9
 #np.random.seed(seed=seed)
 #tf.set_random_seed(seed=seed)
+
+# when running on p3.2xlarge
+os.environ["HDF5_USE_FILE_LOCKING"]="FALSE"
 
 # Summary Information
 IMG_TYPE = "sem_pre_proc/"
@@ -44,8 +48,8 @@ attr.path = '/mnt/data/image/2d/' + IMG_TYPE
 results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architecture)
 attr.summ_basename = get_base_name(results_path)
 attr.set_dir_names()
-attr.batch_size = 64
-attr.epochs = 20 
+attr.batch_size = 128
+attr.epochs = 1 
 
 attr.img_width = 224
 attr.img_height = 224
@@ -169,7 +173,7 @@ history = attr.model.fit_generator(
       validation_steps=attr.steps_valid,
       callbacks=callbacks,
       use_multiprocessing=True,
-      workers=10,
+      workers=multiprocessing.cpu_count() - 1,
       verbose=1)
 
 # Save the model

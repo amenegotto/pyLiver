@@ -18,9 +18,12 @@ from Summary import plot_train_stats, create_results_dir, get_base_name, write_s
 from TrainingResume import save_execution_attributes
 import os
 from MultimodalGenerator import MultimodalGenerator
-
+import multiprocessing
 
 # os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin'
+
+# when running on p3.2xlarge
+os.environ["HDF5_USE_FILE_LOCKING"]="FALSE"
 
 # fix seed for reproducible results (only works on CPU, not GPU)
 # seed = 9
@@ -193,7 +196,7 @@ for i in range(0, CYCLES):
         validation_data=attr.validation_generator,
         validation_steps=attr.steps_valid,
         use_multiprocessing=True,
-        workers=10,
+        workers=multiprocessing.cpu_count() - 1,
         callbacks=callbacks)
 
     # plot loss and accuracy

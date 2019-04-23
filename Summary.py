@@ -92,7 +92,7 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
         print(time_callback.times, file=f)
 
         # Confusion Matrix and Classification Report
-        if execattr.fusion == "None":
+        if execattr.test_generator is not None:
             execattr.test_generator.reset()
 
         if execattr.architecture != "":

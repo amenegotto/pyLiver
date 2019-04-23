@@ -85,3 +85,6 @@ class MultimodalGenerator(Sequence):
 
         X = [(np.array(batch_img, dtype="float") / 255.0), batch_attributes]
         return X, batch_labels
+
+    def reset(self):
+        self.batch_index = 0    
