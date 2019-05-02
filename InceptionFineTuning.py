@@ -2,11 +2,9 @@
 # InceptionV3 fine tuning for hepatocarcinoma diagnosis through CTs images
 # with image augmentation
 
-import os
 from keras.applications.inception_v3 import InceptionV3
 from keras.models import Model
 from keras.layers import Dense, GlobalAveragePooling2D, Dropout
-from keras.preprocessing.image import ImageDataGenerator
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from keras.optimizers import SGD
 import numpy as np
@@ -35,10 +33,10 @@ attr.architecture = 'InceptionV3'
 
 results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architecture)
 attr.summ_basename = get_base_name(results_path)
-attr.path = '/mnt/data/image/2d/com_pre_proc'
+attr.path = '/mnt/data/image/2d/sem_pre_proc'
 attr.set_dir_names()
-attr.batch_size = 64  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
-attr.epochs = 1
+attr.batch_size = 128  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
+attr.epochs = 50
 
 # create the base pre-trained model
 base_model = InceptionV3(weights='imagenet', include_top=False)
@@ -66,7 +64,7 @@ for layer in base_model.layers:
     layer.trainable = False
 
 # compile the model (should be done *after* setting layers to non-trainable)
-attr.model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['accuracy'], )
+attr.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'], )
 
 # prepare data augmentation configuration
 train_datagen = create_image_generator(True, True)
@@ -96,7 +94,7 @@ attr.test_generator = test_datagen.flow_from_directory(
 
 callbacks_top = [
     ModelCheckpoint(attr.summ_basename + "-mid-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-    EarlyStopping(monitor='val_loss', patience=10, verbose=0)
+    EarlyStopping(monitor='val_acc', patience=10, verbose=0)
 ]
 
 # calculate steps based on number of images and batch size
@@ -133,7 +131,7 @@ time_callback = TimeCallback()
 #Save the model after every epoch.
 callbacks_list = [time_callback,
     ModelCheckpoint(attr.summ_basename + "-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-    EarlyStopping(monitor='val_loss', patience=10, verbose=0)
+    EarlyStopping(monitor='val_acc', patience=10, verbose=0)
 ]
 
 # train the top 2 inception blocks, i.e. we will freeze
@@ -196,4 +194,4 @@ attr.test_generator.reset()
 
 write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks_list[2].stopped_epoch)
 
-# copy_to_s3(attr)
+copy_to_s3(attr)

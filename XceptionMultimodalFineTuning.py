@@ -44,8 +44,8 @@ results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architec
 attr.summ_basename = get_base_name(results_path)
 
 attr.set_dir_names()
-attr.batch_size = 64  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
-attr.epochs = 10
+attr.batch_size = 128  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
+attr.epochs = 100
 
 # hyper parameters for model
 nb_classes = 2  # number of classes
@@ -164,10 +164,10 @@ for layer in base_model.layers:
 
 callbacks = [
     ModelCheckpoint(attr.summ_basename + "-mid-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-    EarlyStopping(monitor='val_loss', patience=3, verbose=0)
+    EarlyStopping(monitor='val_acc', patience=10, verbose=0)
 ]
 
-attr.model.compile(optimizer='nadam', loss='categorical_crossentropy', metrics=['accuracy'])
+attr.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
 # Train Simple CNN
 attr.model.fit_generator(attr.train_generator,
@@ -199,7 +199,7 @@ for layer in attr.model.layers[based_model_last_block_layer_number:]:
 
 # compile the model with a SGD/momentum optimizer
 # and a very slow learning rate.
-attr.model.compile(optimizer='nadam',
+attr.model.compile(optimizer='adam',
               loss='categorical_crossentropy',
               metrics=['accuracy'])
 
@@ -208,7 +208,7 @@ time_callback = TimeCallback()
 # save weights of best training epoch: monitor either val_loss or val_acc
 callbacks_list = [time_callback,
     ModelCheckpoint(attr.summ_basename + "-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-    EarlyStopping(monitor='val_loss', patience=10, verbose=0)
+    EarlyStopping(monitor='val_acc', patience=10, verbose=0)
 ]
 
 # Persist execution attributes for session resume
@@ -256,5 +256,5 @@ attr.test_generator.reset()
 
 write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks_list[2].stopped_epoch)
 
-# copy_to_s3(attr)
+copy_to_s3(attr)
 # os.system("sudo poweroff")

@@ -6,7 +6,7 @@ from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense, BatchNormalization
 from keras import backend as K
-from keras.optimizers import RMSprop
+from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras import regularizers
 from ExecutionAttributes import ExecutionAttribute
@@ -32,7 +32,7 @@ IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 1
+CYCLES = 20
 
 #
 # Execution Attributes
@@ -44,10 +44,10 @@ attr.img_width, attr.img_height = 96, 96
 # network parameters
 # attr.path='C:/Users/hp/Downloads/cars_train'
 # attr.path='/home/amenegotto/dataset/2d/sem_pre_proc_mini/
-attr.path = '/mnt/data/image/2d/com_pre_proc/'
+attr.path = '/mnt/data/image/2d/sem_pre_proc/'
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 3 
-attr.batch_size = 32
+attr.epochs = 100
+attr.batch_size = 128
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':
@@ -80,7 +80,7 @@ for i in range(0, CYCLES):
 
     # compile model using accuracy as main metric, rmsprop (gradient descendent)
     attr.model.compile(loss='binary_crossentropy',
-                  optimizer=RMSprop(lr=0.00001),
+                  optimizer=Adam(lr=0.00001),
                   metrics=['accuracy'])
 
     plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
@@ -123,7 +123,7 @@ for i in range(0, CYCLES):
 
     time_callback = TimeCallback()
 
-    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=10, mode='max', restore_best_weights=True),
+    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=20, mode='max', restore_best_weights=True),
                  ModelCheckpoint(attr.curr_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
 
 

@@ -9,7 +9,7 @@ from keras.layers import Conv2D, MaxPooling2D, Input, concatenate
 from keras.layers import Activation, Dropout, Flatten, Dense, BatchNormalization
 from keras import backend as K
 from keras.models import Model
-from keras.optimizers import RMSprop
+from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras import regularizers
 from ExecutionAttributes import ExecutionAttribute
@@ -43,7 +43,7 @@ INTERMEDIATE_FUSION = True
 LATE_FUSION = False
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 1
+CYCLES = 20
 
 # Execution Attributes
 attr = ExecutionAttribute()
@@ -57,8 +57,8 @@ attr.numpy_path = '/mnt/data/image/2d/numpy/' + IMG_TYPE
 # attr.numpy_path = '/home/amenegotto/dataset/2d/numpy/' + IMG_TYPE
 attr.path = '/mnt/data/image/2d/' + IMG_TYPE
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 20
-attr.batch_size = 256
+attr.epochs = 100
+attr.batch_size = 128
 attr.set_dir_names()
 
 if K.image_data_format() == 'channels_first':
@@ -134,9 +134,9 @@ for i in range(0, CYCLES):
 
     plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
 
-    # compile model using accuracy as main metric, rmsprop (gradient descendent)
+    # compile model using accuracy as main metric, Adam (gradient descendent)
     attr.model.compile(loss='binary_crossentropy',
-                  optimizer=RMSprop(lr=0.0001),
+                  optimizer=Adam(lr=0.0001),
                   metrics=['accuracy'])
 
     attr.train_generator = MultimodalGenerator(
@@ -194,7 +194,7 @@ for i in range(0, CYCLES):
 
     time_callback = TimeCallback()
 
-    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=5, mode='max', restore_best_weights=True),
+    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=20, mode='max', restore_best_weights=True),
                  ModelCheckpoint(attr.curr_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
 
    
@@ -226,5 +226,5 @@ for i in range(0, CYCLES):
 
     K.clear_session()
 
-# copy_to_s3(attr)
+copy_to_s3(attr)
 # os.system("sudo poweroff")

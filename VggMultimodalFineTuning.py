@@ -49,7 +49,7 @@ results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architec
 attr.summ_basename = get_base_name(results_path)
 attr.set_dir_names()
 attr.batch_size = 128
-attr.epochs = 1 
+attr.epochs = 50
 
 attr.img_width = 224
 attr.img_height = 224
@@ -154,12 +154,12 @@ attr.increment_seq()
 
 time_callback = TimeCallback()
 
-callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=15, mode='max', restore_best_weights=True),
+callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=10, mode='max', restore_best_weights=True),
              ModelCheckpoint(attr.summ_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
 
 
 # Compile the model
-attr.model.compile(loss='categorical_crossentropy', optimizer=optimizers.RMSprop(lr=1e-4), metrics=['acc'])
+attr.model.compile(loss='categorical_crossentropy', optimizer=optimizers.Adam(lr=1e-4), metrics=['acc'])
 
 # Persist execution attributes for session resume
 save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.properties')

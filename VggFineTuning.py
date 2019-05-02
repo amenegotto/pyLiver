@@ -2,7 +2,6 @@
 # VGG19 fine tuning for hepatocarcinoma diagnosis through CTs images
 # wigh image augmentation
 
-import os
 import numpy as np
 from keras.applications import VGG19
 from keras import models
@@ -34,10 +33,10 @@ attr.architecture = 'vgg19'
 
 results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architecture)
 attr.summ_basename = get_base_name(results_path)
-attr.path = '/mnt/data/image/2d/com_pre_proc'
+attr.path = '/mnt/data/image/2d/sem_pre_proc'
 attr.set_dir_names()
 attr.batch_size = 128 
-attr.epochs = 1 
+attr.epochs = 50
 
 attr.img_width = 224
 attr.img_height = 224
@@ -104,7 +103,7 @@ callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=15, mode='
 
 
 # Compile the model
-attr.model.compile(loss='categorical_crossentropy', optimizer=optimizers.RMSprop(lr=1e-4), metrics=['acc'])
+attr.model.compile(loss='categorical_crossentropy', optimizer=optimizers.Adam(lr=1e-4), metrics=['acc'])
 
 # calculate steps based on number of images and batch size
 attr.calculate_steps()
@@ -162,5 +161,5 @@ attr.test_generator.reset()
 
 write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks[1].stopped_epoch)
 
-# copy_to_s3(attr)
+copy_to_s3(attr)
 # os.system("sudo poweroff")
