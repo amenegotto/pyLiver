@@ -6,7 +6,7 @@ from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense, BatchNormalization
 from keras import backend as K
-from keras.optimizers import RMSprop, Adam
+from keras.optimizers import Adam
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras import regularizers
 from ExecutionAttributes import ExecutionAttribute
