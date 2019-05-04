@@ -136,7 +136,7 @@ for i in range(0, CYCLES):
 
     # compile model using accuracy as main metric, Adam (gradient descendent)
     attr.model.compile(loss='binary_crossentropy',
-                  optimizer=Adam(lr=0.0001),
+                  optimizer=Adam(lr=0.00001),
                   metrics=['accuracy'])
 
     attr.train_generator = MultimodalGenerator(
