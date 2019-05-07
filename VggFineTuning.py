@@ -29,7 +29,7 @@ IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 2
+CYCLES = 5
 
 # Execution Attributes
 attr = ExecutionAttribute()
@@ -41,7 +41,7 @@ attr.s3_path = NETWORK_FORMAT + '/' + IMAGE_FORMAT
 attr.path = '/mnt/data/image/2d/sem_pre_proc'
 attr.set_dir_names()
 attr.batch_size = 128 
-attr.epochs = 1 
+attr.epochs = 50
 
 attr.img_width = 224
 attr.img_height = 224
@@ -110,7 +110,7 @@ for i in range(0, CYCLES):
 
     time_callback = TimeCallback()
 
-    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=15, mode='max', restore_best_weights=True),
+    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=10, mode='max', restore_best_weights=True),
                  ModelCheckpoint(attr.curr_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
 
     # Compile the model

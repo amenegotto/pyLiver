@@ -88,4 +88,10 @@ class MultimodalGenerator(Sequence):
         return X, batch_labels
 
     def reset(self):
-        self.batch_index = 0    
+        self.batch_index = 0
+
+    def get_labels(self):
+        if self.is_categorical:
+           return self.dataset[:, range(21,23)]
+        else:
+           return self.dataset[:, 21]

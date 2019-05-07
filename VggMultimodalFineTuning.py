@@ -51,7 +51,7 @@ results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architec
 attr.summ_basename = get_base_name(results_path)
 attr.set_dir_names()
 attr.batch_size = 128
-attr.epochs = 50
+attr.epochs = 1 
 
 attr.img_width = 224
 attr.img_height = 224
@@ -59,7 +59,7 @@ attr.img_height = 224
 input_attributes_s = (20,)
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 2
+CYCLES = 1
 
 for i in range(0, CYCLES):
     
@@ -195,14 +195,11 @@ for i in range(0, CYCLES):
     # Plot train stats
     plot_train_stats(history, attr.curr_basename + '-training_loss.png', attr.curr_basename + '-training_accuracy.png')
 
-    # Reset test generator before raw predictions
-    attr.test_generator.reset()
-
     # Get the filenames from the generator
     fnames = attr.fnames_test
 
     # Get the ground truth from generator
-    ground_truth = attr.labels_test
+    ground_truth = attr.test_generator.get_labels()
 
     # Get the predictions from the model using the generator
     predictions = attr.model.predict_generator(attr.test_generator, steps=attr.steps_test, verbose=1)
