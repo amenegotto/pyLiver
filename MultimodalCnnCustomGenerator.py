@@ -56,6 +56,7 @@ attr.numpy_path = '/mnt/data/image/2d/numpy/' + IMG_TYPE
 # attr.numpy_path = '/home/amenegotto/dataset/2d/numpy/' + IMG_TYPE
 attr.path = '/mnt/data/image/2d/' + IMG_TYPE
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
+attr.s3_path = NETWORK_FORMAT + '/' + IMAGE_FORMAT
 attr.epochs = 100
 attr.batch_size = 128
 attr.set_dir_names()
@@ -99,28 +100,33 @@ for i in range(0, CYCLES):
         drop4 = Dropout(0.40)(hidden2)
         output = Dense(1, activation='sigmoid')(drop4)
 
+        attr.model = Model(inputs=[visible, attributes_input], outputs=output)
+        
     if LATE_FUSION:
         attr.fusion = "Late Fusion"
-        hidden1 = Dense(256, kernel_regularizer=regularizers.l2(0.0005))(flat)
-        act3 = Activation('relu')(hidden1)
-        drop3 = Dropout(0.40)(act3)
-        hidden2 = Dense(256, activation='relu', kernel_regularizer=regularizers.l2(0.0005))(
-            drop3)
-        drop4 = Dropout(0.40)(hidden2)
-        output_img = Dense(1, activation='sigmoid')(drop4)
+
+        hidden1 = Dense(512, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(flat)
+        drop5 = Dropout(0.40)(hidden1)
+        hidden2 = Dense(1024, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(drop5)
+        drop6 = Dropout(0.40)(hidden2)
+        output_img = Dense(1, activation='sigmoid')(drop6)
+
+        model_img = Model(inputs=visible, outputs=output_img)
 
         attributes_input = Input(shape=input_attributes_s)
-        hidden3 = Dense(32, activation='relu')(attributes_input)
-        drop6 = Dropout(0.2)(hidden3)
-        hidden4 = Dense(16, activation='relu')(drop6)
-        drop7 = Dropout(0.2)(hidden4)
+        hidden3 = Dense(128, activation='relu')(attributes_input)
+        drop6 = Dropout(0.20)(hidden3)
+        hidden4 = Dense(256, activation='relu')(drop6)
+        drop7 = Dropout(0.20)(hidden4)
         output_attributes = Dense(1, activation='sigmoid')(drop7)
+        model_attr = Model(inputs=attributes_input, outputs=output_attributes)
 
-        concat = concatenate([output_img, output_attributes])
-        hidden5 = Dense(4, activation='relu')(concat)
+        concat = concatenate([model_img.output, model_attr.output])
+
+        hidden5 = Dense(8, activation='relu')(concat)
         output = Dense(1, activation='sigmoid')(hidden5)
 
-    attr.model = Model(inputs=[visible, attributes_input], outputs=output)
+        attr.model = Model(inputs=[model_img.input, model_attr.input], outputs=output)
 
     plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
 

@@ -57,6 +57,7 @@ attr.numpy_path = '/mnt/data/image/2d/numpy/' + IMG_TYPE
 # attr.numpy_path = '/home/amenegotto/dataset/2d/numpy/' + IMG_TYPE
 attr.path = '/mnt/data/image/2d/' + IMG_TYPE
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
+attr.s3_path = NETWORK_FORMAT + '/' + IMAGE_FORMAT
 attr.epochs = 10
 attr.batch_size = 128
 attr.set_dir_names()
@@ -132,9 +133,7 @@ for i in range(0, CYCLES):
 
         concat = concatenate([model_img.output, model_attr.output]) 
 
-        # concat = concatenate([output_img, output_attributes])
         hidden5 = Dense(8, activation='relu')(concat)
-        #drop8 = Dropout(0.1)(hidden5)
         output = Dense(1, activation='sigmoid')(hidden5)
 
         attr.model = Model(inputs=[model_img.input, model_attr.input], outputs=output)

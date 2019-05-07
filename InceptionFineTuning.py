@@ -15,6 +15,7 @@ from TrainingResume import save_execution_attributes
 from keras.utils import plot_model
 from Datasets import create_image_generator
 import multiprocessing
+from keras import backend as K
 
 # fix seed for reproducible results (only works on CPU, not GPU)
 # seed = 9
@@ -33,165 +34,173 @@ attr.architecture = 'InceptionV3'
 
 results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architecture)
 attr.summ_basename = get_base_name(results_path)
+attr.s3_path = NETWORK_FORMAT + '/' + IMAGE_FORMAT
 attr.path = '/mnt/data/image/2d/sem_pre_proc'
 attr.set_dir_names()
 attr.batch_size = 128  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
 attr.epochs = 50
 
-# create the base pre-trained model
-base_model = InceptionV3(weights='imagenet', include_top=False)
+# how many times to execute the training/validation/test cycle
+CYCLES = 2
 
-# dimensions of our images.
-# Inception input size
-attr.img_width, attr.img_height = 299, 299
+for i in range(0, CYCLES):
 
-# add a global spatial average pooling layer
-x = base_model.output
-x = GlobalAveragePooling2D()(x)
-# let's add a fully-connected layer
-x = Dense(1024, activation='relu')(x)
-drop = Dropout(0.50)(x)
+    # create the base pre-trained model
+    base_model = InceptionV3(weights='imagenet', include_top=False)
 
-# and a logistic layer -- we have 2 classes
-predictions = Dense(2, activation='softmax')(drop)
+    # dimensions of our images.
+    # Inception input size
+    attr.img_width, attr.img_height = 299, 299
 
-# this is the model we will train
-attr.model = Model(inputs=base_model.input, outputs=predictions)
+    # add a global spatial average pooling layer
+    x = base_model.output
+    x = GlobalAveragePooling2D()(x)
+    # let's add a fully-connected layer
+    x = Dense(1024, activation='relu')(x)
+    drop = Dropout(0.50)(x)
 
-# first: train only the top layers (which were randomly initialized)
-# i.e. freeze all convolutional InceptionV3 layers
-for layer in base_model.layers:
-    layer.trainable = False
+    # and a logistic layer -- we have 2 classes
+    predictions = Dense(2, activation='softmax')(drop)
 
-# compile the model (should be done *after* setting layers to non-trainable)
-attr.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'], )
+    # this is the model we will train
+    attr.model = Model(inputs=base_model.input, outputs=predictions)
 
-# prepare data augmentation configuration
-train_datagen = create_image_generator(True, True)
+    # first: train only the top layers (which were randomly initialized)
+    # i.e. freeze all convolutional InceptionV3 layers
+    for layer in base_model.layers:
+        layer.trainable = False
 
-test_datagen = create_image_generator(True, False)
+    # compile the model (should be done *after* setting layers to non-trainable)
+    attr.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'], )
 
-attr.train_generator = train_datagen.flow_from_directory(
-    attr.train_data_dir,
-    target_size=(attr.img_height, attr.img_width),
-    batch_size=attr.batch_size,
-    shuffle=True,
-    class_mode='categorical')
+    # prepare data augmentation configuration
+    train_datagen = create_image_generator(True, True)
 
-attr.validation_generator = test_datagen.flow_from_directory(
-    attr.validation_data_dir,
-    target_size=(attr.img_height, attr.img_width),
-    batch_size=attr.batch_size,
-    shuffle=True,
-    class_mode='categorical')
+    test_datagen = create_image_generator(True, False)
 
-attr.test_generator = test_datagen.flow_from_directory(
-    attr.test_data_dir,
-    target_size=(attr.img_height, attr.img_width),
-    batch_size=1,
-    shuffle=False,
-    class_mode='categorical')
+    attr.train_generator = train_datagen.flow_from_directory(
+        attr.train_data_dir,
+        target_size=(attr.img_height, attr.img_width),
+        batch_size=attr.batch_size,
+        shuffle=True,
+        class_mode='categorical')
 
-callbacks_top = [
-    ModelCheckpoint(attr.summ_basename + "-mid-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-    EarlyStopping(monitor='val_acc', patience=10, verbose=0)
-]
+    attr.validation_generator = test_datagen.flow_from_directory(
+        attr.validation_data_dir,
+        target_size=(attr.img_height, attr.img_width),
+        batch_size=attr.batch_size,
+        shuffle=True,
+        class_mode='categorical')
 
-# calculate steps based on number of images and batch size
-attr.calculate_steps()
+    attr.test_generator = test_datagen.flow_from_directory(
+        attr.test_data_dir,
+        target_size=(attr.img_height, attr.img_width),
+        batch_size=1,
+        shuffle=False,
+        class_mode='categorical')
 
-attr.increment_seq()
+    callbacks_top = [
+        ModelCheckpoint(attr.curr_basename + "-mid-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
+        EarlyStopping(monitor='val_acc', patience=10, verbose=0)
+    ]
 
-# Persist execution attributes for session resume
-save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.properties')
+    # calculate steps based on number of images and batch size
+    attr.calculate_steps()
 
-attr.model.fit_generator(
-    attr.train_generator,
-    steps_per_epoch=attr.steps_train,
-    epochs=attr.epochs,
-    validation_data=attr.validation_generator,
-    validation_steps=attr.steps_valid,
-    use_multiprocessing=True,
-    workers=multiprocessing.cpu_count() - 1,
-    callbacks=callbacks_top)
+    attr.increment_seq()
 
-# at this point, the top layers are well trained and we can start fine-tuning
-# convolutional layers from inception V3. We will freeze the bottom N layers
-# and train the remaining top layers.
+    # Persist execution attributes for session resume
+    save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.properties')
 
-# let's visualize layer names and layer indices to see how many layers
-# we should freeze:
-for i, layer in enumerate(base_model.layers):
-    print(i, layer.name)
+    attr.model.fit_generator(
+        attr.train_generator,
+        steps_per_epoch=attr.steps_train,
+        epochs=attr.epochs,
+        validation_data=attr.validation_generator,
+        validation_steps=attr.steps_valid,
+        use_multiprocessing=True,
+        workers=multiprocessing.cpu_count() - 1,
+        callbacks=callbacks_top)
 
-attr.model.load_weights(attr.summ_basename + "-mid-ckweights.h5")
+    # at this point, the top layers are well trained and we can start fine-tuning
+    # convolutional layers from inception V3. We will freeze the bottom N layers
+    # and train the remaining top layers.
 
-time_callback = TimeCallback()
+    # let's visualize layer names and layer indices to see how many layers
+    # we should freeze:
+    for i, layer in enumerate(base_model.layers):
+        print(i, layer.name)
 
-#Save the model after every epoch.
-callbacks_list = [time_callback,
-    ModelCheckpoint(attr.summ_basename + "-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-    EarlyStopping(monitor='val_acc', patience=10, verbose=0)
-]
+    attr.model.load_weights(attr.curr_basename + "-mid-ckweights.h5")
 
-# train the top 2 inception blocks, i.e. we will freeze
-# the first 172 layers and unfreeze the rest:
-for layer in attr.model.layers[:172]:
-    layer.trainable = False
-for layer in attr.model.layers[172:]:
-    layer.trainable = True
+    time_callback = TimeCallback()
 
-# we need to recompile the model for these modifications to take effect
-# we use SGD with a low learning rate
-attr.model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'])
+    #Save the model after every epoch.
+    callbacks_list = [time_callback,
+        ModelCheckpoint(attr.curr_basename + "-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
+        EarlyStopping(monitor='val_acc', patience=10, verbose=0)
+    ]
 
-plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
+    # train the top 2 inception blocks, i.e. we will freeze
+    # the first 172 layers and unfreeze the rest:
+    for layer in attr.model.layers[:172]:
+        layer.trainable = False
+    for layer in attr.model.layers[172:]:
+        layer.trainable = True
 
-history = attr.model.fit_generator(
-    attr.train_generator,
-    steps_per_epoch=attr.steps_train,
-    epochs=attr.epochs,
-    validation_data=attr.validation_generator,
-    validation_steps=attr.steps_valid,
-    use_multiprocessing=True,
-    workers=multiprocessing.cpu_count() - 1,
-    callbacks=callbacks_list)
+    # we need to recompile the model for these modifications to take effect
+    # we use SGD with a low learning rate
+    attr.model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'])
 
-# Save the model
-attr.model.save(attr.summ_basename + '-weights.h5')
+    plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
 
-# Plot train stats
-plot_train_stats(history, attr.summ_basename + '-training_loss.png', attr.summ_basename + '-training_accuracy.png')
+    history = attr.model.fit_generator(
+        attr.train_generator,
+        steps_per_epoch=attr.steps_train,
+        epochs=attr.epochs,
+        validation_data=attr.validation_generator,
+        validation_steps=attr.steps_valid,
+        use_multiprocessing=True,
+        workers=multiprocessing.cpu_count() - 1,
+        callbacks=callbacks_list)
 
-# Reset test generator before raw predictions
-attr.test_generator.reset()
+    # Save the model
+    attr.model.save(attr.curr_basename + '-weights.h5')
 
-# Get the filenames from the generator
-fnames = attr.test_generator.filenames
+    # Plot train stats
+    plot_train_stats(history, attr.curr_basename + '-training_loss.png', attr.curr_basename + '-training_accuracy.png')
 
-# Get the ground truth from generator
-ground_truth = attr.test_generator.classes
+    # Reset test generator before raw predictions
+    attr.test_generator.reset()
 
-# Get the label to class mapping from the generator
-label2index = attr.test_generator.class_indices
+    # Get the filenames from the generator
+    fnames = attr.test_generator.filenames
 
-# Getting the mapping from class index to class label
-idx2label = dict((v, k) for k, v in label2index.items())
+    # Get the ground truth from generator
+    ground_truth = attr.test_generator.classes
 
-# Get the predictions from the model using the generator
-predictions = attr.model.predict_generator(attr.test_generator, steps=attr.steps_test, verbose=1)
-predicted_classes = np.argmax(predictions, axis=1)
+    # Get the label to class mapping from the generator
+    label2index = attr.test_generator.class_indices
 
-errors = np.where(predicted_classes != ground_truth)[0]
-res = "No of errors = {}/{}".format(len(errors), attr.test_generator.samples)
-with open(attr.summ_basename + "-predicts.txt", "a") as f:
-    f.write(res)
-    print(res)
-    f.close()
+    # Getting the mapping from class index to class label
+    idx2label = dict((v, k) for k, v in label2index.items())
 
-# Reset test generator before summary predictions
-attr.test_generator.reset()
+    # Get the predictions from the model using the generator
+    predictions = attr.model.predict_generator(attr.test_generator, steps=attr.steps_test, verbose=1)
+    predicted_classes = np.argmax(predictions, axis=1)
 
-write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks_list[2].stopped_epoch)
+    errors = np.where(predicted_classes != ground_truth)[0]
+    res = "No of errors = {}/{}".format(len(errors), attr.test_generator.samples)
+    with open(attr.curr_basename + "-predicts.txt", "a") as f:
+        f.write(res)
+        print(res)
+        f.close()
+
+    # Reset test generator before summary predictions
+    attr.test_generator.reset()
+
+    write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks_list[2].stopped_epoch)
+
+    K.clear_session()
 
 copy_to_s3(attr)

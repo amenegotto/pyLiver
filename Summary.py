@@ -297,4 +297,4 @@ def save_model(execattr: ExecutionAttribute):
 
 def copy_to_s3(execattr: ExecutionAttribute):
     src_dir = execattr.summ_basename.split('/')
-    os.system("aws s3 cp "+execattr.summ_basename.replace(src_dir[len(src_dir)-1],"") + " s3://pyliver-logs/logs/ --recursive --exclude \"*\" --include \"*" + src_dir[len(src_dir)-1] + "*\"")
+    os.system("aws s3 cp "+execattr.summ_basename.replace(src_dir[len(src_dir)-1],"") + " s3://pyliver-logs/"+ execattr.s3_path + " --recursive --exclude \"*\" --include \"*" + src_dir[len(src_dir)-1] + "*\"")

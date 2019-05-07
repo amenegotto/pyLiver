@@ -17,6 +17,7 @@ from TrainingResume import save_execution_attributes
 from keras.utils import plot_model
 from MultimodalGenerator import MultimodalGenerator
 import multiprocessing
+from keras import backend as K
 
 # fix seed for reproducible results (only works on CPU, not GPU)
 # seed = 9
@@ -42,200 +43,213 @@ attr.path = '/mnt/data/image/2d/' + IMG_TYPE
 
 results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architecture)
 attr.summ_basename = get_base_name(results_path)
+attr.s3_path = NETWORK_FORMAT + '/' + IMAGE_FORMAT
 attr.set_dir_names()
 attr.batch_size = 128  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
 attr.epochs = 50
 
-# create the base pre-trained model
-base_model = InceptionV3(weights='imagenet', include_top=False)
+# how many times to execute the training/validation/test cycle
+CYCLES = 2
 
-# dimensions of our images.
-# Inception input size
-attr.img_width, attr.img_height = 299, 299
+for i in range(0, CYCLES):
+    # create the base pre-trained model
+    base_model = InceptionV3(weights='imagenet', include_top=False)
 
-input_attributes_s = (20,)
+    # dimensions of our images.
+    # Inception input size
+    attr.img_width, attr.img_height = 299, 299
 
-# Top Model Block
-glob1 = GlobalAveragePooling2D()(base_model.output)
+    input_attributes_s = (20,)
 
-if INTERMEDIATE_FUSION:
-    attr.fusion = "Intermediate Fusion"
+    # Top Model Block
+    glob1 = GlobalAveragePooling2D()(base_model.output)
 
-    attributes_input = Input(shape=input_attributes_s)
-    concat = concatenate([glob1, attributes_input])
+    if INTERMEDIATE_FUSION:
+        attr.fusion = "Intermediate Fusion"
 
-    hidden1 = Dense(512, activation='relu')(concat)
-    drop = Dropout(0.3)(hidden1)
-    output = Dense(2, activation='softmax')(drop)
+        attributes_input = Input(shape=input_attributes_s)
+        concat = concatenate([glob1, attributes_input])
 
-if LATE_FUSION:
-    attr.fusion = "Late Fusion"
-    hidden1 = Dense(512, activation='relu')(glob1)
-    drop = Dropout(0.3)(hidden1)
-    output_img = Dense(2, activation='softmax')(drop)
+        hidden1 = Dense(512, activation='relu')(concat)
+        drop = Dropout(0.3)(hidden1)
+        output = Dense(2, activation='softmax')(drop)
 
-    attributes_input = Input(shape=input_attributes_s)
-    hidden3 = Dense(32, activation='relu')(attributes_input)
-    drop6 = Dropout(0.2)(hidden3)
-    hidden4 = Dense(16, activation='relu')(drop6)
-    drop7 = Dropout(0.2)(hidden4)
-    output_attributes = Dense(1, activation='sigmoid')(drop7)
+        attr.model = Model(inputs=[base_model.input, attributes_input], outputs=output)
 
-    concat = concatenate([output_img, output_attributes])
-    hidden5 = Dense(4, activation='relu')(concat)
-    output = Dense(1, activation='sigmoid')(hidden5)
+    if LATE_FUSION:
+        attr.fusion = "Late Fusion"
+        hidden1 = Dense(512, activation='relu')(glob1)
+        drop = Dropout(0.3)(hidden1)
+        output_img = Dense(2, activation='softmax')(drop)
 
-attr.model = Model(inputs=[base_model.input, attributes_input], outputs=output)
+        model_img = Model(inputs=vgg_conv.input, outputs=output_img)
 
-plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
+        attributes_input = Input(shape=input_attributes_s)
+        hidden3 = Dense(128, activation='relu')(attributes_input)
+        drop6 = Dropout(0.20)(hidden3)
+        hidden4 = Dense(256, activation='relu')(drop6)
+        drop7 = Dropout(0.20)(hidden4)
+        output_attributes = Dense(1, activation='sigmoid')(drop7)
+        model_attr = Model(inputs=attributes_input, outputs=output_attributes)
 
-# first: train only the top layers (which were randomly initialized)
-# i.e. freeze all convolutional InceptionV3 layers
-for layer in base_model.layers:
-    layer.trainable = False
+        concat = concatenate([model_img.output, model_attr.output])
 
-# compile the model (should be done *after* setting layers to non-trainable)
-attr.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'], )
+        hidden5 = Dense(8, activation='relu')(concat)
+        output = Dense(1, activation='sigmoid')(hidden5)
 
-attr.train_generator = MultimodalGenerator(
-            npy_path = attr.numpy_path + '/train-categorical.npy', 
-            batch_size = attr.batch_size, 
-            height = attr.img_height, 
-            width = attr.img_width, 
-            channels = 3, 
-            classes = 2, 
-            should_shuffle = True,
-            is_categorical = True, 
-            is_debug = False, 
-            width_shift = 0.2, 
-            height_shift = 0.2, 
-            rotation_angle = 15, 
-            shear_factor = 10, 
-            zoom_factor = 0.2)
+        attr.model = Model(inputs=[model_img.input, model_attr.input], outputs=output)
 
-attr.validation_generator = MultimodalGenerator(
-            npy_path = attr.numpy_path + '/valid-categorical.npy', 
-            batch_size = attr.batch_size, 
-            height = attr.img_height, 
-            width = attr.img_width, 
-            channels = 3, 
-            classes = 2, 
-            should_shuffle = True,
-            is_categorical = True, 
-            is_debug = False, 
-            width_shift = 0.2, 
-            height_shift = 0.2, 
-            rotation_angle = 15, 
-            shear_factor = 10, 
-            zoom_factor = 0.2)
+    plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
 
-attr.test_generator = MultimodalGenerator(
-            npy_path = attr.numpy_path + '/test-categorical.npy', 
-            batch_size = 1, 
-            height = attr.img_height, 
-            width = attr.img_width, 
-            channels = 3, 
-            classes = 2, 
-            should_shuffle = False,
-            is_categorical = True, 
-            is_debug = False)
+    # first: train only the top layers (which were randomly initialized)
+    # i.e. freeze all convolutional InceptionV3 layers
+    for layer in base_model.layers:
+        layer.trainable = False
 
-print("[INFO] Calculating samples and steps...")
-attr.calculate_samples_len()
+    # compile the model (should be done *after* setting layers to non-trainable)
+    attr.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'], )
 
-attr.calculate_steps()
+    attr.train_generator = MultimodalGenerator(
+                npy_path = attr.numpy_path + '/train-categorical.npy', 
+                batch_size = attr.batch_size, 
+                height = attr.img_height, 
+                width = attr.img_width, 
+                channels = 3, 
+                classes = 2, 
+                should_shuffle = True,
+                is_categorical = True, 
+                is_debug = False, 
+                width_shift = 0.2, 
+                height_shift = 0.2, 
+                rotation_angle = 15, 
+                shear_factor = 10, 
+                zoom_factor = 0.2)
 
-attr.increment_seq()
+    attr.validation_generator = MultimodalGenerator(
+                npy_path = attr.numpy_path + '/valid-categorical.npy', 
+                batch_size = attr.batch_size, 
+                height = attr.img_height, 
+                width = attr.img_width, 
+                channels = 3, 
+                classes = 2, 
+                should_shuffle = True,
+                is_categorical = True, 
+                is_debug = False, 
+                width_shift = 0.2, 
+                height_shift = 0.2, 
+                rotation_angle = 15, 
+                shear_factor = 10, 
+                zoom_factor = 0.2)
 
-callbacks_top = [
-    ModelCheckpoint(attr.summ_basename + "-mid-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-    EarlyStopping(monitor='val_acc', patience=10, verbose=0)
-]
+    attr.test_generator = MultimodalGenerator(
+                npy_path = attr.numpy_path + '/test-categorical.npy', 
+                batch_size = 1, 
+                height = attr.img_height, 
+                width = attr.img_width, 
+                channels = 3, 
+                classes = 2, 
+                should_shuffle = False,
+                is_categorical = True, 
+                is_debug = False)
 
-# Persist execution attributes for session resume
-save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.properties')
+    print("[INFO] Calculating samples and steps...")
+    attr.calculate_samples_len()
 
-attr.model.fit_generator(
-    attr.train_generator,
-    steps_per_epoch=attr.steps_train,
-    epochs=attr.epochs,
-    validation_data=attr.validation_generator,
-    validation_steps=attr.steps_valid,
-    use_multiprocessing=True,
-    workers=multiprocessing.cpu_count() - 1,
-    callbacks=callbacks_top)
+    attr.calculate_steps()
 
-# at this point, the top layers are well trained and we can start fine-tuning
-# convolutional layers from inception V3. We will freeze the bottom N layers
-# and train the remaining top layers.
+    attr.increment_seq()
 
-# let's visualize layer names and layer indices to see how many layers
-# we should freeze:
-for i, layer in enumerate(base_model.layers):
-    print(i, layer.name)
+    callbacks_top = [
+        ModelCheckpoint(attr.curr_basename + "-mid-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
+        EarlyStopping(monitor='val_acc', patience=10, verbose=0)
+    ]
 
-attr.model.load_weights(attr.summ_basename + "-mid-ckweights.h5")
+    # Persist execution attributes for session resume
+    save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.properties')
 
-time_callback = TimeCallback()
+    attr.model.fit_generator(
+        attr.train_generator,
+        steps_per_epoch=attr.steps_train,
+        epochs=attr.epochs,
+        validation_data=attr.validation_generator,
+        validation_steps=attr.steps_valid,
+        use_multiprocessing=True,
+        workers=multiprocessing.cpu_count() - 1,
+        callbacks=callbacks_top)
 
-#Save the model after every epoch.
-callbacks_list = [time_callback,
-    ModelCheckpoint(attr.summ_basename + "-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-    EarlyStopping(monitor='val_acc', patience=10, verbose=0)
-]
+    # at this point, the top layers are well trained and we can start fine-tuning
+    # convolutional layers from inception V3. We will freeze the bottom N layers
+    # and train the remaining top layers.
 
-# train the top 2 inception blocks, i.e. we will freeze
-# the first 172 layers and unfreeze the rest:
-for layer in attr.model.layers[:172]:
-    layer.trainable = False
-for layer in attr.model.layers[172:]:
-    layer.trainable = True
+    # let's visualize layer names and layer indices to see how many layers
+    # we should freeze:
+    for i, layer in enumerate(base_model.layers):
+        print(i, layer.name)
 
-# we need to recompile the model for these modifications to take effect
-# we use SGD with a low learning rate
-attr.model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'])
+    attr.model.load_weights(attr.curr_basename + "-mid-ckweights.h5")
 
-plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
+    time_callback = TimeCallback()
 
-history = attr.model.fit_generator(
-    attr.train_generator,
-    steps_per_epoch=attr.steps_train,
-    epochs=attr.epochs,
-    validation_data=attr.validation_generator,
-    validation_steps=attr.steps_valid,
-    use_multiprocessing=True,
-    workers=multiprocessing.cpu_count() - 1,
-    callbacks=callbacks_list)
+    #Save the model after every epoch.
+    callbacks_list = [time_callback,
+        ModelCheckpoint(attr.curr_basename + "-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
+        EarlyStopping(monitor='val_acc', patience=10, verbose=0)
+    ]
 
-# Save the model
-attr.model.save(attr.summ_basename + '-weights.h5')
+    # train the top 2 inception blocks, i.e. we will freeze
+    # the first 172 layers and unfreeze the rest:
+    for layer in attr.model.layers[:172]:
+        layer.trainable = False
+    for layer in attr.model.layers[172:]:
+        layer.trainable = True
 
-# Plot train stats
-plot_train_stats(history, attr.summ_basename + '-training_loss.png', attr.summ_basename + '-training_accuracy.png')
+    # we need to recompile the model for these modifications to take effect
+    # we use SGD with a low learning rate
+    attr.model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'])
 
-# Reset test generator before raw predictions
-attr.test_generator.reset()
+    plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
 
-# Get the filenames from the generator
-fnames = attr.fnames_test
+    history = attr.model.fit_generator(
+        attr.train_generator,
+        steps_per_epoch=attr.steps_train,
+        epochs=attr.epochs,
+        validation_data=attr.validation_generator,
+        validation_steps=attr.steps_valid,
+        use_multiprocessing=True,
+        workers=multiprocessing.cpu_count() - 1,
+        callbacks=callbacks_list)
 
-# Get the ground truth from generator
-ground_truth = attr.labels_test
+    # Save the model
+    attr.model.save(attr.curr_basename + '-weights.h5')
 
-# Get the predictions from the model using the generator
-predictions = attr.model.predict_generator(attr.test_generator, steps=attr.steps_test, verbose=1)
-predicted_classes = np.argmax(predictions, axis=1)
+    # Plot train stats
+    plot_train_stats(history, attr.curr_basename + '-training_loss.png', attr.curr_basename + '-training_accuracy.png')
 
-errors = np.where(predicted_classes != ground_truth)[0]
-res = "No of errors = {}/{}".format(len(errors), len(attr.fnames_test))
-with open(attr.summ_basename + "-predicts.txt", "a") as f:
-    f.write(res)
-    print(res)
-    f.close()
+    # Reset test generator before raw predictions
+    attr.test_generator.reset()
 
-# Reset test generator before summary predictions
-attr.test_generator.reset()
+    # Get the filenames from the generator
+    fnames = attr.fnames_test
 
-write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks_list[2].stopped_epoch)
+    # Get the ground truth from generator
+    ground_truth = attr.labels_test
+
+    # Get the predictions from the model using the generator
+    predictions = attr.model.predict_generator(attr.test_generator, steps=attr.steps_test, verbose=1)
+    predicted_classes = np.argmax(predictions, axis=1)
+
+    errors = np.where(predicted_classes != ground_truth)[0]
+    res = "No of errors = {}/{}".format(len(errors), len(attr.fnames_test))
+    with open(attr.curr_basename + "-predicts.txt", "a") as f:
+        f.write(res)
+        print(res)
+        f.close()
+
+    # Reset test generator before summary predictions
+    attr.test_generator.reset()
+
+    write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks_list[2].stopped_epoch)
+
+    K.clear_session()
 
 copy_to_s3(attr)

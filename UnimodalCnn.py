@@ -46,6 +46,7 @@ attr.img_width, attr.img_height = 96, 96
 # attr.path='/home/amenegotto/dataset/2d/sem_pre_proc_mini/
 attr.path = '/mnt/data/image/2d/com_pre_proc/'
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
+attr.s3_path = NETWORK_FORMAT + '/' + IMAGE_FORMAT
 attr.epochs = 100
 attr.batch_size = 128
 attr.set_dir_names()
