@@ -39,11 +39,11 @@ SUMMARY_PATH = "/mnt/data/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
-INTERMEDIATE_FUSION = True
-LATE_FUSION = False
+INTERMEDIATE_FUSION = False
+LATE_FUSION = True
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 20
+CYCLES = 1
 
 # Execution Attributes
 attr = ExecutionAttribute()
@@ -57,7 +57,7 @@ attr.numpy_path = '/mnt/data/image/2d/numpy/' + IMG_TYPE
 # attr.numpy_path = '/home/amenegotto/dataset/2d/numpy/' + IMG_TYPE
 attr.path = '/mnt/data/image/2d/' + IMG_TYPE
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
-attr.epochs = 100
+attr.epochs = 10
 attr.batch_size = 128
 attr.set_dir_names()
 
@@ -109,28 +109,35 @@ for i in range(0, CYCLES):
         drop6 = Dropout(0.40)(hidden2)
         output = Dense(1, activation='sigmoid')(drop6)
 
+        attr.model = Model(inputs=[visible, attributes_input], outputs=output)
+
     if LATE_FUSION:
         attr.fusion = "Late Fusion"
 
-        hidden1 = Dense(512, activation='relu', kernel_regularizer=regularizers.l2(0.0005))(flat)
-        drop5 = Dropout(0.25)(hidden1)
-        hidden2 = Dense(1024, activation='relu', kernel_initializer='he_normal')(drop5)
+        hidden1 = Dense(512, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(flat)
+        drop5 = Dropout(0.40)(hidden1)
+        hidden2 = Dense(1024, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(drop5)
         drop6 = Dropout(0.40)(hidden2)
         output_img = Dense(1, activation='sigmoid')(drop6)
 
+        model_img = Model(inputs=visible, outputs=output_img)
+
         attributes_input = Input(shape=input_attributes_s)
-        hidden3 = Dense(16, activation='relu')(attributes_input)
-        drop6 = Dropout(0.10)(hidden3)
-        hidden4 = Dense(8, activation='relu')(drop6)
-        drop7 = Dropout(0.05)(hidden4)
+        hidden3 = Dense(128, activation='relu')(attributes_input)
+        drop6 = Dropout(0.20)(hidden3)
+        hidden4 = Dense(256, activation='relu')(drop6)
+        drop7 = Dropout(0.20)(hidden4)
         output_attributes = Dense(1, activation='sigmoid')(drop7)
+        model_attr = Model(inputs=attributes_input, outputs=output_attributes)
 
-        concat = concatenate([output_img, output_attributes])
+        concat = concatenate([model_img.output, model_attr.output]) 
+
+        # concat = concatenate([output_img, output_attributes])
         hidden5 = Dense(8, activation='relu')(concat)
-        drop8 = Dropout(0.1)(hidden5)
-        output = Dense(1, activation='sigmoid')(drop8)
+        #drop8 = Dropout(0.1)(hidden5)
+        output = Dense(1, activation='sigmoid')(hidden5)
 
-    attr.model = Model(inputs=[visible, attributes_input], outputs=output)
+        attr.model = Model(inputs=[model_img.input, model_attr.input], outputs=output)
 
     plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
 
