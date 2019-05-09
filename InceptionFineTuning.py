@@ -41,7 +41,7 @@ attr.batch_size = 128  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU mem
 attr.epochs = 50
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 2
+CYCLES = 5
 
 for i in range(0, CYCLES):
 

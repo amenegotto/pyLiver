@@ -29,7 +29,7 @@ IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 1
+CYCLES = 5
 
 # Execution Attributes
 attr = ExecutionAttribute()
@@ -41,7 +41,7 @@ attr.s3_path = NETWORK_FORMAT + '/' + IMAGE_FORMAT
 attr.path = '/mnt/data/image/2d/sem_pre_proc'
 attr.set_dir_names()
 attr.batch_size = 128
-attr.epochs = 1
+attr.epochs = 50
 
 attr.img_width = 224
 attr.img_height = 224

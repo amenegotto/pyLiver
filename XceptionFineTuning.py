@@ -46,7 +46,7 @@ learn_rate = 1e-4  # sgd learning rate
 momentum = .9  # sgd momentum to avoid local minimum
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 2
+CYCLES = 5
 
 for i in range(0, CYCLES):
 
@@ -105,7 +105,7 @@ for i in range(0, CYCLES):
 
     callbacks = [
         ModelCheckpoint(attr.curr_basename + "-mid-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-        EarlyStopping(monitor='val_acc', patience=5, verbose=0)
+        EarlyStopping(monitor='val_acc', patience=10, verbose=0)
     ]
 
     attr.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
