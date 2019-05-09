@@ -51,7 +51,7 @@ results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architec
 attr.summ_basename = get_base_name(results_path)
 attr.set_dir_names()
 attr.batch_size = 128
-attr.epochs = 1 
+attr.epochs = 50
 
 attr.img_width = 224
 attr.img_height = 224
@@ -59,7 +59,7 @@ attr.img_height = 224
 input_attributes_s = (20,)
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 1
+CYCLES = 5
 
 for i in range(0, CYCLES):
     

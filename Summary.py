@@ -103,7 +103,7 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
             print(y_pred)
 
             if execattr.fusion != "None":
-                classes = execattr.labels_test
+                classes = execattr.test_generator.get_labels()
             else:
                 classes = execattr.test_generator.classes
 
@@ -134,6 +134,7 @@ def write_summary_txt(execattr : ExecutionAttribute, network_format, image_forma
                 target_names = labels
             else:
                 target_names = list(execattr.test_generator.class_indices.keys())
+            
             print(classification_report(classes, y_pred, target_names=target_names))
             print(classification_report(classes, y_pred, target_names=target_names), file=f)
 
@@ -267,9 +268,7 @@ def write_csv_test_result(execattr: ExecutionAttribute, score_gen, y_pred, mtx, 
         if stopped_epoch == 0:
             stopped_epoch = execattr.epochs
 
-        csv.write(str(score_gen[0]) + ',' + str(score_gen[1]) + ',' + str(mtx[0, 0]) + ',' + str(mtx[1, 0]) + ',' + str(
-            mtx[1, 1]) + ',' + str(mtx[0, 1]) + ',' + str(precision) + ',' + str(recall) + ',' + str(
-            fscore) + ',' + str(support) + ',' + str(stopped_epoch) + '\n')
+        csv.write(str(score_gen[0]) + ',' + str(score_gen[1]) + ',' + str(mtx[0, 0]) + ',' + str(mtx[1, 0]) + ',' + str(mtx[1, 1]) + ',' + str(mtx[0, 1]) + ',' + str(precision) + ',' + str(recall) + ',' + str(fscore) + ',' + str(support) + ',' + str(stopped_epoch) + '\n')
 
         csv.close()
 

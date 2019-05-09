@@ -47,7 +47,7 @@ attr.s3_path = NETWORK_FORMAT + '/' + IMAGE_FORMAT
 
 attr.set_dir_names()
 attr.batch_size = 128  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
-attr.epochs = 100
+attr.epochs = 50
 
 # hyper parameters for model
 nb_classes = 2  # number of classes
@@ -59,7 +59,7 @@ momentum = .9  # sgd momentum to avoid local minimum
 input_attributes_s = (20,)
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 2
+CYCLES = 5
 
 for i in range(0, CYCLES):
 
@@ -250,7 +250,7 @@ for i in range(0, CYCLES):
     fnames = attr.fnames_test
 
     # Get the ground truth from generator
-    ground_truth = attr.labels_test
+    ground_truth = attr.test_generator.get_labels() 
 
     # Get the predictions from the model using the generator
     predictions = attr.model.predict_generator(attr.test_generator, steps=attr.steps_test, verbose=1)

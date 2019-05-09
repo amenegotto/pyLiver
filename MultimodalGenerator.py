@@ -92,6 +92,6 @@ class MultimodalGenerator(Sequence):
 
     def get_labels(self):
         if self.is_categorical:
-           return self.dataset[:, range(21,23)]
+           return np.argmax(self.dataset[:, range(21,23)], axis=1)
         else:
            return self.dataset[:, 21]
