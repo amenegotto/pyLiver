@@ -99,15 +99,15 @@ for i in range(0, CYCLES):
         shuffle=False,
         class_mode='categorical')
 
-    callbacks_top = [
-        ModelCheckpoint(attr.curr_basename + "-mid-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-        EarlyStopping(monitor='val_acc', patience=10, verbose=0)
-    ]
-
     # calculate steps based on number of images and batch size
     attr.calculate_steps()
 
     attr.increment_seq()
+
+    callbacks_top = [
+        ModelCheckpoint(attr.curr_basename + "-mid-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
+        EarlyStopping(monitor='val_acc', patience=10, verbose=0)
+    ]
 
     # Persist execution attributes for session resume
     save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.properties')

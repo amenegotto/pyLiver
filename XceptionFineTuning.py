@@ -103,11 +103,6 @@ for i in range(0, CYCLES):
             class_mode='categorical',
             shuffle=False)
 
-    callbacks = [
-        ModelCheckpoint(attr.curr_basename + "-mid-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-        EarlyStopping(monitor='val_acc', patience=10, verbose=0)
-    ]
-
     attr.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
@@ -115,6 +110,11 @@ for i in range(0, CYCLES):
     # calculate steps based on number of images and batch size
     attr.calculate_steps()
     attr.increment_seq()
+
+    callbacks = [
+        ModelCheckpoint(attr.curr_basename + "-mid-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
+        EarlyStopping(monitor='val_acc', patience=10, verbose=0)
+    ]
 
     # Train Simple CNN
     attr.model.fit_generator(attr.train_generator,
