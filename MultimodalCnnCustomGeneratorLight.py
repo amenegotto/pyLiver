@@ -43,7 +43,7 @@ INTERMEDIATE_FUSION = False
 LATE_FUSION = True
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 1
+CYCLES = 20
 
 # Execution Attributes
 attr = ExecutionAttribute()
@@ -58,7 +58,7 @@ attr.numpy_path = '/mnt/data/image/2d/numpy/' + IMG_TYPE
 attr.path = '/mnt/data/image/2d/' + IMG_TYPE
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
 attr.s3_path = NETWORK_FORMAT + '/' + IMAGE_FORMAT
-attr.epochs = 10
+attr.epochs = 100
 attr.batch_size = 128
 attr.set_dir_names()
 
