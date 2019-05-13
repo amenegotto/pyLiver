@@ -171,4 +171,4 @@ for i in range(0, CYCLES):
     K.clear_session()
 
 copy_to_s3(attr)
-# os.system("sudo poweroff")
+os.system("sudo poweroff")
