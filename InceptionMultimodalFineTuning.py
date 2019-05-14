@@ -70,7 +70,7 @@ for i in range(0, CYCLES):
         attributes_input = Input(shape=input_attributes_s)
         concat = concatenate([glob1, attributes_input])
 
-        hidden1 = Dense(1024, activation='relu')(concat)
+        hidden1 = Dense(1256, activation='relu')(concat)
         drop = Dropout(0.3)(hidden1)
         output = Dense(2, activation='softmax')(drop)
 
@@ -78,11 +78,11 @@ for i in range(0, CYCLES):
 
     if LATE_FUSION:
         attr.fusion = "Late Fusion"
-        hidden1 = Dense(1024, activation='relu')(glob1)
+        hidden1 = Dense(1256, activation='relu')(glob1)
         drop = Dropout(0.3)(hidden1)
         output_img = Dense(2, activation='softmax')(drop)
 
-        model_img = Model(inputs=vgg_conv.input, outputs=output_img)
+        model_img = Model(inputs=base_model.input, outputs=output_img)
 
         attributes_input = Input(shape=input_attributes_s)
         hidden3 = Dense(128, activation='relu')(attributes_input)

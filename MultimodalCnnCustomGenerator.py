@@ -91,10 +91,10 @@ for i in range(0, CYCLES):
         attributes_input = Input(shape=input_attributes_s)
         concat = concatenate([flat, attributes_input])
 
-        hidden1 = Dense(256, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(concat)
+        hidden1 = Dense(512, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(concat)
         act3 = Activation('relu')(hidden1)
         drop3 = Dropout(0.40)(act3)
-        hidden2 = Dense(256, activation='relu', kernel_initializer='he_normal',
+        hidden2 = Dense(1024, activation='relu', kernel_initializer='he_normal',
                         kernel_regularizer=regularizers.l2(0.0005))(
             drop3)
         drop4 = Dropout(0.40)(hidden2)
