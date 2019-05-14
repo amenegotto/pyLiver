@@ -35,7 +35,7 @@ attr.architecture = 'InceptionV3'
 results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architecture)
 attr.summ_basename = get_base_name(results_path)
 attr.s3_path = NETWORK_FORMAT + '/' + IMAGE_FORMAT
-attr.path = '/mnt/data/image/2d/sem_pre_proc'
+attr.path = '/mnt/data/image/2d/com_pre_proc'
 attr.set_dir_names()
 attr.batch_size = 128  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
 attr.epochs = 50
