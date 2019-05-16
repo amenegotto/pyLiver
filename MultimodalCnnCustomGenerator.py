@@ -19,6 +19,7 @@ from TrainingResume import save_execution_attributes
 import os
 from MultimodalGenerator import MultimodalGenerator
 import multiprocessing
+import gc
 
 # os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin'
 
@@ -31,15 +32,15 @@ os.environ["HDF5_USE_FILE_LOCKING"]="FALSE"
 # tf.set_random_seed(seed=seed)
 
 # Summary Information
-IMG_TYPE = "com_pre_proc/"
+IMG_TYPE = "sem_pre_proc/"
 SUMMARY_PATH = "/mnt/data/results"
 # SUMMARY_PATH="c:/temp/results"
 # SUMMARY_PATH="/tmp/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
-INTERMEDIATE_FUSION = True
-LATE_FUSION = False
+INTERMEDIATE_FUSION = False
+LATE_FUSION = True
 
 # how many times to execute the training/validation/test cycle
 CYCLES = 20
@@ -57,7 +58,7 @@ attr.numpy_path = '/mnt/data/image/2d/numpy/' + IMG_TYPE
 attr.path = '/mnt/data/image/2d/' + IMG_TYPE
 attr.summ_basename = get_base_name(SUMMARY_BASEPATH)
 attr.s3_path = NETWORK_FORMAT + '/' + IMAGE_FORMAT
-attr.epochs = 100
+attr.epochs = 100 
 attr.batch_size = 128
 attr.set_dir_names()
 
@@ -91,13 +92,12 @@ for i in range(0, CYCLES):
         attributes_input = Input(shape=input_attributes_s)
         concat = concatenate([flat, attributes_input])
 
-        hidden1 = Dense(512, kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(concat)
-        act3 = Activation('relu')(hidden1)
-        drop3 = Dropout(0.40)(act3)
-        hidden2 = Dense(1024, activation='relu', kernel_initializer='he_normal',
+        hidden1 = Dense(128, kernel_initializer='he_normal', activation='relu', kernel_regularizer=regularizers.l2(0.0005))(concat)
+        drop3 = Dropout(0.20)(hidden1)
+        hidden2 = Dense(64, activation='relu', kernel_initializer='he_normal',
                         kernel_regularizer=regularizers.l2(0.0005))(
             drop3)
-        drop4 = Dropout(0.40)(hidden2)
+        drop4 = Dropout(0.20)(hidden2)
         output = Dense(1, activation='sigmoid')(drop4)
 
         attr.model = Model(inputs=[visible, attributes_input], outputs=output)
@@ -105,10 +105,10 @@ for i in range(0, CYCLES):
     if LATE_FUSION:
         attr.fusion = "Late Fusion"
 
-        hidden1 = Dense(512, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(flat)
-        drop5 = Dropout(0.40)(hidden1)
-        hidden2 = Dense(1024, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(drop5)
-        drop6 = Dropout(0.40)(hidden2)
+        hidden1 = Dense(128, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(flat)
+        drop5 = Dropout(0.30)(hidden1)
+        hidden2 = Dense(128, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(drop5)
+        drop6 = Dropout(0.30)(hidden2)
         output_img = Dense(1, activation='sigmoid')(drop6)
 
         model_img = Model(inputs=visible, outputs=output_img)
@@ -116,7 +116,7 @@ for i in range(0, CYCLES):
         attributes_input = Input(shape=input_attributes_s)
         hidden3 = Dense(128, activation='relu')(attributes_input)
         drop6 = Dropout(0.20)(hidden3)
-        hidden4 = Dense(256, activation='relu')(drop6)
+        hidden4 = Dense(64, activation='relu')(drop6)
         drop7 = Dropout(0.20)(hidden4)
         output_attributes = Dense(1, activation='sigmoid')(drop7)
         model_attr = Model(inputs=attributes_input, outputs=output_attributes)
@@ -221,6 +221,13 @@ for i in range(0, CYCLES):
     write_summary_txt(attr, NETWORK_FORMAT, IMAGE_FORMAT, ['negative', 'positive'], time_callback, callbacks[1].stopped_epoch)
 
     K.clear_session()
+    del attr.model
+    del callbacks
+    del history
+    del attr.train_generator
+    del attr.validation_generator
+    del attr.test_generator
+    gc.collect()
 
 copy_to_s3(attr)
 # os.system("sudo poweroff")

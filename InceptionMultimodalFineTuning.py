@@ -95,7 +95,7 @@ for i in range(0, CYCLES):
         concat = concatenate([model_img.output, model_attr.output])
 
         hidden5 = Dense(8, activation='relu')(concat)
-        output = Dense(1, activation='sigmoid')(hidden5)
+        output = Dense(2, activation='softmax')(hidden5)
 
         attr.model = Model(inputs=[model_img.input, model_attr.input], outputs=output)
 
