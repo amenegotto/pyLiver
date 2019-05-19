@@ -100,7 +100,7 @@ for i in range(0, CYCLES):
         attributes_input = Input(shape=input_attributes_s)
         hidden3 = Dense(128, activation='relu')(attributes_input)
         drop6 = Dropout(0.20)(hidden3)
-        hidden4 = Dense(256, activation='relu')(drop6)
+        hidden4 = Dense(64, activation='relu')(drop6)
         drop7 = Dropout(0.20)(hidden4)
         output_attributes = Dense(1, activation='sigmoid')(drop7)
         model_attr = Model(inputs=attributes_input, outputs=output_attributes)
