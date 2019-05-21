@@ -28,7 +28,7 @@ from keras import backend as K
 os.environ["HDF5_USE_FILE_LOCKING"]="FALSE"
 
 # Summary Information
-IMG_TYPE = "sem_pre_proc/"
+IMG_TYPE = "com_pre_proc/"
 SUMMARY_PATH = "/mnt/data/results"
 # SUMMARY_PATH="c:/temp/results"
 # SUMMARY_PATH="/tmp/results"
