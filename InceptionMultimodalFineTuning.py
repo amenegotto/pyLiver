@@ -32,8 +32,8 @@ SUMMARY_PATH = "/mnt/data/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
-INTERMEDIATE_FUSION = True
-LATE_FUSION = False
+INTERMEDIATE_FUSION = False
+LATE_FUSION = True
 
 # Execution Attributes
 attr = ExecutionAttribute()
@@ -49,7 +49,7 @@ attr.batch_size = 128  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU mem
 attr.epochs = 50
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 5
+CYCLES = 2
 
 for i in range(0, CYCLES):
     # create the base pre-trained model
