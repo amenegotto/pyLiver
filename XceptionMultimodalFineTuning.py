@@ -30,8 +30,8 @@ SUMMARY_PATH = "/mnt/data/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
-INTERMEDIATE_FUSION = True
-LATE_FUSION = False
+INTERMEDIATE_FUSION = False
+LATE_FUSION = True
 
 # Execution Attributes
 attr = ExecutionAttribute()
@@ -68,31 +68,29 @@ for i in range(0, CYCLES):
 
     # Top Model Block
     glob1 = GlobalAveragePooling2D()(base_model.output)
+    hidout = Dense(1024, activation='relu')(glob1)
+    drop = Dropout(0.20)(hidout)
 
     if INTERMEDIATE_FUSION:
         attr.fusion = "Intermediate Fusion"
 
         attributes_input = Input(shape=input_attributes_s)
-        concat = concatenate([glob1, attributes_input])
+        concat = concatenate([drop, attributes_input])
 
-        hidden1 = Dense(1256, activation='relu')(concat)
-        drop3 = Dropout(0.30)(hidden1)
-        output = Dense(nb_classes, activation='softmax')(drop3)
+        output = Dense(nb_classes, activation='softmax')(concat)
 
         attr.model = Model(inputs=[base_model.input, attributes_input], outputs=output)
 
     if LATE_FUSION:
         attr.fusion = "Late Fusion"
-        hidden1 = Dense(1256, activation='relu')(glob1)
-        drop3 = Dropout(0.30)(hidden1)
-        output_img = Dense(nb_classes, activation='softmax')(drop3)
+        output_img = Dense(nb_classes, activation='softmax')(drop)
 
         model_img = Model(inputs=base_model.input, outputs=output_img)
 
         attributes_input = Input(shape=input_attributes_s)
         hidden3 = Dense(128, activation='relu')(attributes_input)
         drop6 = Dropout(0.20)(hidden3)
-        hidden4 = Dense(256, activation='relu')(drop6)
+        hidden4 = Dense(64, activation='relu')(drop6)
         drop7 = Dropout(0.20)(hidden4)
         output_attributes = Dense(1, activation='sigmoid')(drop7)
         model_attr = Model(inputs=attributes_input, outputs=output_attributes)
