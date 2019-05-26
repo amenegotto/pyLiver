@@ -32,8 +32,8 @@ SUMMARY_PATH = "/mnt/data/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
-INTERMEDIATE_FUSION = False
-LATE_FUSION = True
+INTERMEDIATE_FUSION = True
+LATE_FUSION = False
 
 # Execution Attributes
 attr = ExecutionAttribute()
@@ -63,14 +63,15 @@ for i in range(0, CYCLES):
 
     # Top Model Block
     glob1 = GlobalAveragePooling2D()(base_model.output)
-    hidout = Dense(1024, activation='relu')(glob1)
-    drop = Dropout(0.20)(hidout)
+    hidout = Dense(512, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(glob1)
+    drop = Dropout(0.30)(hidout)
 
     if INTERMEDIATE_FUSION:
         attr.fusion = "Intermediate Fusion"
 
+        hidden1 = Dense(128, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(drop)
         attributes_input = Input(shape=input_attributes_s)
-        concat = concatenate([drop, attributes_input])
+        concat = concatenate([hidden1, attributes_input])
         output = Dense(2, activation='softmax')(concat)
 
         attr.model = Model(inputs=[base_model.input, attributes_input], outputs=output)
@@ -104,7 +105,7 @@ for i in range(0, CYCLES):
         layer.trainable = False
 
     # compile the model (should be done *after* setting layers to non-trainable)
-    attr.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'], )
+    attr.model.compile(optimizer='nadam', loss='categorical_crossentropy', metrics=['accuracy'], )
 
     attr.train_generator = MultimodalGenerator(
                 npy_path = attr.numpy_path + '/train-categorical.npy', 
@@ -202,7 +203,7 @@ for i in range(0, CYCLES):
 
     # we need to recompile the model for these modifications to take effect
     # we use SGD with a low learning rate
-    attr.model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'])
+    attr.model.compile(optimizer='nadam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
 

@@ -7,6 +7,7 @@ from keras.applications import *
 from keras.models import Model
 from keras.layers import Input, concatenate
 from keras.layers import Dropout, Dense
+from keras.optimizers import Adam
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from Summary import create_results_dir, get_base_name, plot_train_stats, write_summary_txt, copy_to_s3
 from ExecutionAttributes import ExecutionAttribute
@@ -30,8 +31,8 @@ SUMMARY_PATH = "/mnt/data/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
-INTERMEDIATE_FUSION = False
-LATE_FUSION = True
+INTERMEDIATE_FUSION = True
+LATE_FUSION = False
 
 # Execution Attributes
 attr = ExecutionAttribute()
@@ -53,8 +54,6 @@ attr.epochs = 50
 nb_classes = 2  # number of classes
 based_model_last_block_layer_number = 126  # value is based on based model selected.
 attr.img_width, attr.img_height = 299, 299  # change based on the shape/structure of your images
-learn_rate = 1e-4  # sgd learning rate
-momentum = .9  # sgd momentum to avoid local minimum
 
 input_attributes_s = (20,)
 
@@ -68,14 +67,16 @@ for i in range(0, CYCLES):
 
     # Top Model Block
     glob1 = GlobalAveragePooling2D()(base_model.output)
-    hidout = Dense(1024, activation='relu')(glob1)
-    drop = Dropout(0.20)(hidout)
+    hidout = Dense(512, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(glob1)
+    drop = Dropout(0.30)(hidout)
 
     if INTERMEDIATE_FUSION:
         attr.fusion = "Intermediate Fusion"
+	
+        hidden1 = Dense(128, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(drop)
 
         attributes_input = Input(shape=input_attributes_s)
-        concat = concatenate([drop, attributes_input])
+        concat = concatenate([hidden1, attributes_input])
 
         output = Dense(nb_classes, activation='softmax')(concat)
 
@@ -177,7 +178,7 @@ for i in range(0, CYCLES):
         EarlyStopping(monitor='val_acc', patience=10, verbose=0)
     ]
 
-    attr.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    attr.model.compile(optimizer='nadam', loss='categorical_crossentropy', metrics=['accuracy'])
 
     # Train Simple CNN
     attr.model.fit_generator(attr.train_generator,
@@ -209,7 +210,7 @@ for i in range(0, CYCLES):
 
     # compile the model with a SGD/momentum optimizer
     # and a very slow learning rate.
-    attr.model.compile(optimizer='adam',
+    attr.model.compile(optimizer='nadam',
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
 
