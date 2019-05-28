@@ -8,7 +8,8 @@ from keras.layers import GlobalAveragePooling2D
 from keras.layers import Input, concatenate
 from keras.layers import Dropout, Dense
 from keras.callbacks import ModelCheckpoint, EarlyStopping
-from keras.optimizers import SGD
+from keras.optimizers import SGD, Adam
+from keras import regularizers
 import numpy as np
 from Summary import create_results_dir, get_base_name, plot_train_stats, write_summary_txt, copy_to_s3
 from ExecutionAttributes import ExecutionAttribute
@@ -49,7 +50,7 @@ attr.batch_size = 128  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU mem
 attr.epochs = 50
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 2
+CYCLES = 5
 
 for i in range(0, CYCLES):
     # create the base pre-trained model
@@ -63,16 +64,17 @@ for i in range(0, CYCLES):
 
     # Top Model Block
     glob1 = GlobalAveragePooling2D()(base_model.output)
-    hidout = Dense(512, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(glob1)
-    drop = Dropout(0.30)(hidout)
-
+    hidout = Dense(1024, activation='relu')(glob1)
     if INTERMEDIATE_FUSION:
         attr.fusion = "Intermediate Fusion"
 
-        hidden1 = Dense(128, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(drop)
         attributes_input = Input(shape=input_attributes_s)
-        concat = concatenate([hidden1, attributes_input])
-        output = Dense(2, activation='softmax')(concat)
+        concat = concatenate([hidout, attributes_input])
+        hidden1 = Dense(128, activation='relu')(concat)
+        drop6 = Dropout(0.20)(hidden1)
+        hidden2 = Dense(64, activation='relu')(drop6)
+        drop6 = Dropout(0.20)(hidden2)
+        output = Dense(2, activation='softmax')(drop6)
 
         attr.model = Model(inputs=[base_model.input, attributes_input], outputs=output)
 
@@ -105,7 +107,7 @@ for i in range(0, CYCLES):
         layer.trainable = False
 
     # compile the model (should be done *after* setting layers to non-trainable)
-    attr.model.compile(optimizer='nadam', loss='categorical_crossentropy', metrics=['accuracy'], )
+    attr.model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'], )
 
     attr.train_generator = MultimodalGenerator(
                 npy_path = attr.numpy_path + '/train-categorical.npy', 
@@ -195,15 +197,15 @@ for i in range(0, CYCLES):
     ]
 
     # train the top 2 inception blocks, i.e. we will freeze
-    # the first 172 layers and unfreeze the rest:
-    for layer in attr.model.layers[:172]:
+    # the first 249 layers and unfreeze the rest:
+    for layer in attr.model.layers[:249]:
         layer.trainable = False
-    for layer in attr.model.layers[172:]:
+    for layer in attr.model.layers[249:]:
         layer.trainable = True
 
     # we need to recompile the model for these modifications to take effect
     # we use SGD with a low learning rate
-    attr.model.compile(optimizer='nadam', loss='categorical_crossentropy', metrics=['accuracy'])
+    attr.model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'])
 
     plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
 
