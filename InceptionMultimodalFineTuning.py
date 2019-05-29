@@ -8,7 +8,7 @@ from keras.layers import GlobalAveragePooling2D
 from keras.layers import Input, concatenate
 from keras.layers import Dropout, Dense
 from keras.callbacks import ModelCheckpoint, EarlyStopping
-from keras.optimizers import SGD, Adam
+from keras.optimizers import SGD
 from keras import regularizers
 import numpy as np
 from Summary import create_results_dir, get_base_name, plot_train_stats, write_summary_txt, copy_to_s3
@@ -26,7 +26,7 @@ from keras import backend as K
 # tf.set_random_seed(seed=seed)
 
 # Summary Information
-IMG_TYPE = "sem_pre_proc/"
+IMG_TYPE = "com_pre_proc/"
 SUMMARY_PATH = "/mnt/data/results"
 # SUMMARY_PATH="c:/temp/results"
 # SUMMARY_PATH="/tmp/results"

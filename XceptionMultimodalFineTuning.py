@@ -7,7 +7,7 @@ from keras.applications import *
 from keras.models import Model
 from keras.layers import Input, concatenate
 from keras.layers import Dropout, Dense
-from keras.optimizers import Adam
+from keras.optimizers import SGD
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from Summary import create_results_dir, get_base_name, plot_train_stats, write_summary_txt, copy_to_s3
 from ExecutionAttributes import ExecutionAttribute
@@ -58,7 +58,7 @@ attr.img_width, attr.img_height = 299, 299  # change based on the shape/structur
 input_attributes_s = (20,)
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 5
+CYCLES = 2
 
 for i in range(0, CYCLES):
 
@@ -67,18 +67,19 @@ for i in range(0, CYCLES):
 
     # Top Model Block
     glob1 = GlobalAveragePooling2D()(base_model.output)
-    hidout = Dense(512, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(glob1)
-    drop = Dropout(0.30)(hidout)
+    hidout = Dense(1024, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(glob1)
 
     if INTERMEDIATE_FUSION:
         attr.fusion = "Intermediate Fusion"
 	
-        hidden1 = Dense(128, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(drop)
-
         attributes_input = Input(shape=input_attributes_s)
-        concat = concatenate([hidden1, attributes_input])
-
-        output = Dense(nb_classes, activation='softmax')(concat)
+        concat = concatenate([hidout, attributes_input])
+        
+        hidden1 = Dense(128, activation='relu')(concat)
+        drop6 = Dropout(0.20)(hidden1)
+        hidden2 = Dense(64, activation='relu')(drop6)
+        drop6 = Dropout(0.20)(hidden2)
+        output = Dense(2, activation='softmax')(drop6)
 
         attr.model = Model(inputs=[base_model.input, attributes_input], outputs=output)
 
@@ -178,7 +179,7 @@ for i in range(0, CYCLES):
         EarlyStopping(monitor='val_acc', patience=10, verbose=0)
     ]
 
-    attr.model.compile(optimizer='nadam', loss='categorical_crossentropy', metrics=['accuracy'])
+    attr.model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'])
 
     # Train Simple CNN
     attr.model.fit_generator(attr.train_generator,
@@ -210,7 +211,7 @@ for i in range(0, CYCLES):
 
     # compile the model with a SGD/momentum optimizer
     # and a very slow learning rate.
-    attr.model.compile(optimizer='nadam',
+    attr.model.compile(ooptimizer=SGD(lr=0.0001, momentum=0.9),
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
 
