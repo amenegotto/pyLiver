@@ -26,15 +26,15 @@ from keras import backend as K
 # tf.set_random_seed(seed=seed)
 
 # Summary Information
-IMG_TYPE = "com_pre_proc/"
+IMG_TYPE = "sem_pre_proc/"
 SUMMARY_PATH = "/mnt/data/results"
 # SUMMARY_PATH="c:/temp/results"
 # SUMMARY_PATH="/tmp/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
-INTERMEDIATE_FUSION = True
-LATE_FUSION = False
+INTERMEDIATE_FUSION = False
+LATE_FUSION = True
 
 # Execution Attributes
 attr = ExecutionAttribute()
@@ -50,7 +50,7 @@ attr.batch_size = 128  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU mem
 attr.epochs = 50
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 5
+CYCLES = 1
 
 for i in range(0, CYCLES):
     # create the base pre-trained model
@@ -80,7 +80,7 @@ for i in range(0, CYCLES):
 
     if LATE_FUSION:
         attr.fusion = "Late Fusion"
-        output_img = Dense(2, activation='softmax')(drop)
+        output_img = Dense(2, activation='softmax')(hidout)
 
         model_img = Model(inputs=base_model.input, outputs=output_img)
 

@@ -7,7 +7,7 @@ from keras.applications import VGG19
 from keras.layers import Input, concatenate
 from keras.layers import Dropout, Flatten, Dense
 from keras.models import Model
-from keras import optimizers
+from keras.optimizers import SGD 
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from Summary import create_results_dir, get_base_name, plot_train_stats, write_summary_txt, copy_to_s3
 from ExecutionAttributes import ExecutionAttribute
@@ -59,7 +59,7 @@ attr.img_height = 224
 input_attributes_s = (20,)
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 5
+CYCLES = 2
 
 for i in range(0, CYCLES):
     
@@ -172,7 +172,7 @@ for i in range(0, CYCLES):
 
 
     # Compile the model
-    attr.model.compile(loss='categorical_crossentropy', optimizer=optimizers.Adam(lr=1e-4), metrics=['acc'])
+    attr.model.compile(loss='categorical_crossentropy', optimizer=SGD(lr=0.0001, momentum=0.9, nesterov=True), metrics=['acc'])
 
     # Persist execution attributes for session resume
     save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.properties')

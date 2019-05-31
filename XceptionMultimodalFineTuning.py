@@ -31,8 +31,8 @@ SUMMARY_PATH = "/mnt/data/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
-INTERMEDIATE_FUSION = True
-LATE_FUSION = False
+INTERMEDIATE_FUSION = False
+LATE_FUSION = True
 
 # Execution Attributes
 attr = ExecutionAttribute()
@@ -85,7 +85,7 @@ for i in range(0, CYCLES):
 
     if LATE_FUSION:
         attr.fusion = "Late Fusion"
-        output_img = Dense(nb_classes, activation='softmax')(drop)
+        output_img = Dense(nb_classes, activation='softmax')(hidout)
 
         model_img = Model(inputs=base_model.input, outputs=output_img)
 
@@ -211,7 +211,7 @@ for i in range(0, CYCLES):
 
     # compile the model with a SGD/momentum optimizer
     # and a very slow learning rate.
-    attr.model.compile(ooptimizer=SGD(lr=0.0001, momentum=0.9),
+    attr.model.compile(optimizer=SGD(lr=0.0001, momentum=0.9),
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
 
