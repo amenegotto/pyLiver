@@ -9,7 +9,7 @@ from keras.layers import Conv2D, MaxPooling2D, Input, concatenate
 from keras.layers import Activation, Dropout, Flatten, Dense, BatchNormalization
 from keras import backend as K
 from keras.models import Model
-from keras.optimizers import Adam
+from keras.optimizers import SGD
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 from keras import regularizers
 from ExecutionAttributes import ExecutionAttribute
@@ -39,11 +39,11 @@ SUMMARY_PATH = "/mnt/data/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
-INTERMEDIATE_FUSION = True
-LATE_FUSION = False
+INTERMEDIATE_FUSION = False
+LATE_FUSION = True
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 20
+CYCLES = 2
 
 # Execution Attributes
 attr = ExecutionAttribute()
@@ -132,7 +132,7 @@ for i in range(0, CYCLES):
 
     # compile model using accuracy as main metric, rmsprop (gradient descendent)
     attr.model.compile(loss='binary_crossentropy',
-                  optimizer=Adam(lr=0.00001),
+                  optimizer=SGD(lr=0.0001, momentum=0.9),
                   metrics=['accuracy'])
 
     attr.train_generator = MultimodalGenerator(
