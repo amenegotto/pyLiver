@@ -1,25 +1,37 @@
 import pandas as pd
 import glob
 
-CSV_RESULTS_PATHS = 'c:/users/hp/Downloads/foo.csv'
-CSV_OUTPUT = 'c:/users/hp/Downloads/foo55.csv'
+CSV_RESULTS_PATHS = '/mnt/data/results/index.csv'
 
 f_out = None
-first = True
 
-
-def read_txt(f_path):
+def read_txt(f_path, is_fine_tuning):
     global first, f_out
+    first = True
     files = [f for f in glob.glob(f_path + "*.txt", recursive=True)]
     for file in files:
         if 'predict' in file:
             continue
 
-        seq = file.split('-')[2].split('.')[0]
+        if is_fine_tuning:
+            seq = file.split('-')[3].split('.')[0]
+        else:
+            seq = file.split('-')[2].split('.')[0]
+
         f = open(file, "r")
         line_header = 'path,'
         line_values = f_path + ','
+        ignore = False
         for line in f:
+
+            if 'Kappa Score' in line:
+                line_header = line_header + 'Kappa Score,'
+                line_values = line_values + line.split('=')[1].replace('\n','').strip() + ','
+                break
+
+            if ignore:
+                continue
+            
             if ':' in line:
                 header = line.split(':')[0]
                 value = line.split(':')[1].replace('\n', '').replace(',', '-')
@@ -27,7 +39,7 @@ def read_txt(f_path):
                 line_values = line_values + value + ','
 
             if 'Learning Rate' in line:
-                break
+                ignore = True
 
         f.close()
 
@@ -46,8 +58,13 @@ def read_txt(f_path):
             curr_line = curr_line + 1
 
         if first:
+            if line_header[-1] != '\n':
+                line_header = line_header + '\n'
             f_out.write(line_header)
             first = False
+
+        if line_values[-1] != '\n':
+            line_values = line_values + '\n'
 
         f_out.write(line_values)
 
@@ -59,9 +76,6 @@ for i, r in paths.iterrows():
 
     f_out = open(path + '-summary.csv', 'a')
 
-    if not is_fine_tuning:
-        read_txt(path)
-    else:
-        read_txt(path)
+    read_txt(path, is_fine_tuning)
 
     f_out.close()
