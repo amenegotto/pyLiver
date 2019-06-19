@@ -46,7 +46,7 @@ learn_rate = 1e-4  # sgd learning rate
 momentum = .9  # sgd momentum to avoid local minimum
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 5
+CYCLES = 1
 
 for i in range(0, CYCLES):
 
@@ -55,8 +55,8 @@ for i in range(0, CYCLES):
 
     # Top Model Block
     x = GlobalAveragePooling2D()(base_model.output)
-    hidden1 = Dense(512, activation='relu')(x)
-    drop = Dropout(0.30)(hidden1)
+    hidden1 = Dense(1024, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(x)
+    drop = Dropout(0.20)(hidden1)
     predictions = Dense(nb_classes, activation='softmax')(drop)
 
     # add your top layer block to your base model
@@ -103,7 +103,7 @@ for i in range(0, CYCLES):
             class_mode='categorical',
             shuffle=False)
 
-    attr.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    attr.model.compile(optimizer=SGD(lr=0.0001,momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'])
 
     plot_model(attr.model, to_file=attr.summ_basename + '-architecture.png')
 
@@ -113,7 +113,7 @@ for i in range(0, CYCLES):
 
     callbacks = [
         ModelCheckpoint(attr.curr_basename + "-mid-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-        EarlyStopping(monitor='val_acc', patience=10, verbose=0)
+        EarlyStopping(monitor='val_acc', patience=50, verbose=0)
     ]
 
     # Train Simple CNN
@@ -146,7 +146,7 @@ for i in range(0, CYCLES):
 
     # compile the model with a SGD/momentum optimizer
     # and a very slow learning rate.
-    attr.model.compile(optimizer='adam',
+    attr.model.compile(optimizer=SGD(lr=0.0001, momentum=0.9),
                   loss='categorical_crossentropy',
                   metrics=['accuracy'])
 
@@ -155,7 +155,7 @@ for i in range(0, CYCLES):
     # save weights of best training epoch: monitor either val_loss or val_acc
     callbacks_list = [time_callback,
         ModelCheckpoint(attr.curr_basename + "-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-        EarlyStopping(monitor='val_acc', patience=10, verbose=0)
+        EarlyStopping(monitor='val_acc', patience=50, verbose=0)
     ]
 
     # Persist execution attributes for session resume

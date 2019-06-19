@@ -31,8 +31,8 @@ SUMMARY_PATH = "/mnt/data/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
-INTERMEDIATE_FUSION = False
-LATE_FUSION = True
+INTERMEDIATE_FUSION = True
+LATE_FUSION = False
 
 # Execution Attributes
 attr = ExecutionAttribute()
@@ -48,7 +48,7 @@ attr.s3_path = NETWORK_FORMAT + '/' + IMAGE_FORMAT
 
 attr.set_dir_names()
 attr.batch_size = 128  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
-attr.epochs = 50
+attr.epochs = 500
 
 # hyper parameters for model
 nb_classes = 2  # number of classes
@@ -58,7 +58,7 @@ attr.img_width, attr.img_height = 299, 299  # change based on the shape/structur
 input_attributes_s = (20,)
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 2
+CYCLES = 1
 
 for i in range(0, CYCLES):
 
@@ -176,7 +176,7 @@ for i in range(0, CYCLES):
 
     callbacks = [
         ModelCheckpoint(attr.curr_basename + "-mid-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-        EarlyStopping(monitor='val_acc', patience=10, verbose=0)
+        EarlyStopping(monitor='val_acc', patience=50, verbose=0)
     ]
 
     attr.model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'])
@@ -220,7 +220,7 @@ for i in range(0, CYCLES):
     # save weights of best training epoch: monitor either val_loss or val_acc
     callbacks_list = [time_callback,
         ModelCheckpoint(attr.curr_basename + "-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-        EarlyStopping(monitor='val_acc', patience=10, verbose=0)
+        EarlyStopping(monitor='val_acc', patience=50, verbose=0)
     ]
 
     # Persist execution attributes for session resume
