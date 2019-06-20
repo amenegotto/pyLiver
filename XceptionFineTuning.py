@@ -6,6 +6,7 @@ from keras.layers import *
 from keras.applications import *
 from keras.models import Model
 from keras.callbacks import ModelCheckpoint, EarlyStopping
+from keras.optimizers import SGD
 from Summary import create_results_dir, get_base_name, plot_train_stats, write_summary_txt, copy_to_s3
 from ExecutionAttributes import ExecutionAttribute
 from TimeCallback import TimeCallback
@@ -36,7 +37,7 @@ attr.s3_path = NETWORK_FORMAT + '/' + IMAGE_FORMAT
 attr.path = '/mnt/data/image/2d/com_pre_proc'
 attr.set_dir_names()
 attr.batch_size = 128  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
-attr.epochs = 50
+attr.epochs = 500
 
 # hyper parameters for model
 nb_classes = 2  # number of classes
@@ -113,7 +114,7 @@ for i in range(0, CYCLES):
 
     callbacks = [
         ModelCheckpoint(attr.curr_basename + "-mid-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-        EarlyStopping(monitor='val_acc', patience=50, verbose=0)
+        EarlyStopping(monitor='val_acc', patience=10, verbose=0)
     ]
 
     # Train Simple CNN

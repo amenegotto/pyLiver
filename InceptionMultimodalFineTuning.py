@@ -161,7 +161,7 @@ for i in range(0, CYCLES):
 
     callbacks_top = [
         ModelCheckpoint(attr.curr_basename + "-mid-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-        EarlyStopping(monitor='val_acc', patience=50, verbose=0)
+        EarlyStopping(monitor='val_acc', patience=10, verbose=0)
     ]
 
     # Persist execution attributes for session resume

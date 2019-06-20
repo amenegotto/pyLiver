@@ -176,7 +176,7 @@ for i in range(0, CYCLES):
 
     callbacks = [
         ModelCheckpoint(attr.curr_basename + "-mid-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-        EarlyStopping(monitor='val_acc', patience=50, verbose=0)
+        EarlyStopping(monitor='val_acc', patience=10, verbose=0)
     ]
 
     attr.model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'])
