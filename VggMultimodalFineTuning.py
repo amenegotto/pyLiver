@@ -28,15 +28,15 @@ from keras import backend as K
 os.environ["HDF5_USE_FILE_LOCKING"]="FALSE"
 
 # Summary Information
-IMG_TYPE = "com_pre_proc/"
+IMG_TYPE = "sem_pre_proc/"
 SUMMARY_PATH = "/mnt/data/results"
 # SUMMARY_PATH="c:/temp/results"
 # SUMMARY_PATH="/tmp/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
-INTERMEDIATE_FUSION = False
-LATE_FUSION = True
+INTERMEDIATE_FUSION = True
+LATE_FUSION = False
 
 # Execution Attributes
 attr = ExecutionAttribute()
@@ -51,7 +51,7 @@ results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architec
 attr.summ_basename = get_base_name(results_path)
 attr.set_dir_names()
 attr.batch_size = 128
-attr.epochs = 50
+attr.epochs = 500
 
 attr.img_width = 224
 attr.img_height = 224
@@ -59,7 +59,7 @@ attr.img_height = 224
 input_attributes_s = (20,)
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 2
+CYCLES = 1
 
 for i in range(0, CYCLES):
     
@@ -167,7 +167,7 @@ for i in range(0, CYCLES):
 
     time_callback = TimeCallback()
 
-    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=10, mode='max', restore_best_weights=True),
+    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=50, mode='max', restore_best_weights=True),
                  ModelCheckpoint(attr.curr_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
 
 
