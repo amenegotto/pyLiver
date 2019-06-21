@@ -9,6 +9,7 @@ from keras.layers import Dropout, Flatten, Dense
 from keras.models import Model
 from keras.optimizers import SGD 
 from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras import regularizers
 from Summary import create_results_dir, get_base_name, plot_train_stats, write_summary_txt, copy_to_s3
 from ExecutionAttributes import ExecutionAttribute
 from TimeCallback import TimeCallback
@@ -83,8 +84,10 @@ for i in range(0, CYCLES):
         attributes_input = Input(shape=input_attributes_s)
         concat = concatenate([flat, attributes_input])
 
-        hidden1 = Dense(1024, activation='relu')(concat)
-        drop3 = Dropout(0.30)(hidden1)
+        hidden1 = Dense(1024, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(concat)
+        drop6 = Dropout(0.20)(hidden1)
+        hidden2 = Dense(64, activation='relu')(drop6)
+        drop3 = Dropout(0.20)(hidden2)
         output = Dense(2, activation='softmax')(drop3)
 
         attr.model = Model(inputs=[vgg_conv.input, attributes_input], outputs=output)
