@@ -177,7 +177,7 @@ for i in range(0, CYCLES):
 
 
     # Compile the model
-    attr.model.compile(loss='categorical_crossentropy', optimizer=SGD(lr=0.0001, momentum=0.9, nesterov=True), metrics=['acc'])
+    attr.model.compile(loss='categorical_crossentropy', optimizer=SGD(lr=0.0001, momentum=0.9), metrics=['acc'])
 
     # Persist execution attributes for session resume
     save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.properties')
