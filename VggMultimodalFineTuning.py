@@ -85,10 +85,12 @@ for i in range(0, CYCLES):
         concat = concatenate([flat, attributes_input])
 
         hidden1 = Dense(1024, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(concat)
-        drop6 = Dropout(0.20)(hidden1)
-        hidden2 = Dense(64, activation='relu')(drop6)
-        drop3 = Dropout(0.20)(hidden2)
-        output = Dense(2, activation='softmax')(drop3)
+        drop6 = Dropout(0.30)(hidden1)
+        hidden2 = Dense(128, activation='relu')(drop6)
+        drop7 = Dropout(0.20)(hidden2)
+        hidden3 = Dense(64, activation='relu')(drop7)
+        drop8 = Dropout(0.20)(hidden3)
+        output = Dense(2, activation='softmax')(drop8)
 
         attr.model = Model(inputs=[vgg_conv.input, attributes_input], outputs=output)
 
