@@ -29,7 +29,7 @@ IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 5
+CYCLES = 1
 
 # Execution Attributes
 attr = ExecutionAttribute()
@@ -38,10 +38,10 @@ attr.architecture = 'vgg19'
 results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architecture)
 attr.summ_basename = get_base_name(results_path)
 attr.s3_path = NETWORK_FORMAT + '/' + IMAGE_FORMAT
-attr.path = '/mnt/data/image/2d/com_pre_proc'
+attr.path = '/mnt/data/image/2d/sem_pre_proc'
 attr.set_dir_names()
 attr.batch_size = 128
-attr.epochs = 50
+attr.epochs = 500
 
 attr.img_width = 224
 attr.img_height = 224
@@ -110,11 +110,11 @@ for i in range(0, CYCLES):
 
     time_callback = TimeCallback()
 
-    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=10, mode='max', restore_best_weights=True),
+    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=50, mode='max', restore_best_weights=True),
                  ModelCheckpoint(attr.curr_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
 
     # Compile the model
-    attr.model.compile(loss='categorical_crossentropy', optimizer=optimizers.Adam(lr=1e-4), metrics=['acc'])
+    attr.model.compile(loss='categorical_crossentropy', optimizer=optimizers.SGD(lr=1e-4, momentum=0.9, nesterov=True), metrics=['acc'])
 
     # Persist execution attributes for session resume
     save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.properties')
@@ -171,4 +171,4 @@ for i in range(0, CYCLES):
     K.clear_session()
 
 copy_to_s3(attr)
-os.system("sudo poweroff")
+#os.system("sudo poweroff")

@@ -9,6 +9,7 @@ from keras.layers import Dropout, Flatten, Dense
 from keras.models import Model
 from keras.optimizers import SGD 
 from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras import regularizers
 from Summary import create_results_dir, get_base_name, plot_train_stats, write_summary_txt, copy_to_s3
 from ExecutionAttributes import ExecutionAttribute
 from TimeCallback import TimeCallback
@@ -28,15 +29,15 @@ from keras import backend as K
 os.environ["HDF5_USE_FILE_LOCKING"]="FALSE"
 
 # Summary Information
-IMG_TYPE = "com_pre_proc/"
+IMG_TYPE = "sem_pre_proc/"
 SUMMARY_PATH = "/mnt/data/results"
 # SUMMARY_PATH="c:/temp/results"
 # SUMMARY_PATH="/tmp/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
-INTERMEDIATE_FUSION = False
-LATE_FUSION = True
+INTERMEDIATE_FUSION = True
+LATE_FUSION = False
 
 # Execution Attributes
 attr = ExecutionAttribute()
@@ -51,7 +52,7 @@ results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architec
 attr.summ_basename = get_base_name(results_path)
 attr.set_dir_names()
 attr.batch_size = 128
-attr.epochs = 50
+attr.epochs = 500
 
 attr.img_width = 224
 attr.img_height = 224
@@ -59,7 +60,7 @@ attr.img_height = 224
 input_attributes_s = (20,)
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 2
+CYCLES = 1
 
 for i in range(0, CYCLES):
     
@@ -83,9 +84,13 @@ for i in range(0, CYCLES):
         attributes_input = Input(shape=input_attributes_s)
         concat = concatenate([flat, attributes_input])
 
-        hidden1 = Dense(1024, activation='relu')(concat)
-        drop3 = Dropout(0.30)(hidden1)
-        output = Dense(2, activation='softmax')(drop3)
+        hidden1 = Dense(1024, activation='relu', kernel_initializer='he_normal', kernel_regularizer=regularizers.l2(0.0005))(concat)
+        drop6 = Dropout(0.30)(hidden1)
+        hidden2 = Dense(128, activation='relu')(drop6)
+        drop7 = Dropout(0.20)(hidden2)
+        hidden3 = Dense(64, activation='relu')(drop7)
+        drop8 = Dropout(0.20)(hidden3)
+        output = Dense(2, activation='softmax')(drop8)
 
         attr.model = Model(inputs=[vgg_conv.input, attributes_input], outputs=output)
 
@@ -167,12 +172,12 @@ for i in range(0, CYCLES):
 
     time_callback = TimeCallback()
 
-    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=10, mode='max', restore_best_weights=True),
+    callbacks = [time_callback, EarlyStopping(monitor='val_acc', patience=50, mode='max', restore_best_weights=True),
                  ModelCheckpoint(attr.curr_basename + "-ckweights.h5", mode='max', verbose=1, monitor='val_acc', save_best_only=True)]
 
 
     # Compile the model
-    attr.model.compile(loss='categorical_crossentropy', optimizer=SGD(lr=0.0001, momentum=0.9, nesterov=True), metrics=['acc'])
+    attr.model.compile(loss='categorical_crossentropy', optimizer=SGD(lr=0.0001, momentum=0.9), metrics=['acc'])
 
     # Persist execution attributes for session resume
     save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.properties')

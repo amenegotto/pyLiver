@@ -26,15 +26,15 @@ from keras import backend as K
 # tf.set_random_seed(seed=seed)
 
 # Summary Information
-IMG_TYPE = "com_pre_proc/"
+IMG_TYPE = "sem_pre_proc/"
 SUMMARY_PATH = "/mnt/data/results"
 # SUMMARY_PATH="c:/temp/results"
 # SUMMARY_PATH="/tmp/results"
 NETWORK_FORMAT = "Multimodal"
 IMAGE_FORMAT = "2D"
 SUMMARY_BASEPATH = create_results_dir(SUMMARY_PATH, NETWORK_FORMAT, IMAGE_FORMAT)
-INTERMEDIATE_FUSION = False
-LATE_FUSION = True
+INTERMEDIATE_FUSION = True
+LATE_FUSION = False
 
 # Execution Attributes
 attr = ExecutionAttribute()
@@ -47,7 +47,7 @@ attr.summ_basename = get_base_name(results_path)
 attr.s3_path = NETWORK_FORMAT + '/' + IMAGE_FORMAT
 attr.set_dir_names()
 attr.batch_size = 128  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
-attr.epochs = 50
+attr.epochs = 500
 
 # how many times to execute the training/validation/test cycle
 CYCLES = 1
@@ -193,7 +193,7 @@ for i in range(0, CYCLES):
     #Save the model after every epoch.
     callbacks_list = [time_callback,
         ModelCheckpoint(attr.curr_basename + "-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-        EarlyStopping(monitor='val_acc', patience=10, verbose=0)
+        EarlyStopping(monitor='val_acc', patience=50, verbose=0)
     ]
 
     # train the top 2 inception blocks, i.e. we will freeze

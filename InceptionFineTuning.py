@@ -35,13 +35,13 @@ attr.architecture = 'InceptionV3'
 results_path = create_results_dir(SUMMARY_BASEPATH, 'fine-tuning', attr.architecture)
 attr.summ_basename = get_base_name(results_path)
 attr.s3_path = NETWORK_FORMAT + '/' + IMAGE_FORMAT
-attr.path = '/mnt/data/image/2d/com_pre_proc'
+attr.path = '/mnt/data/image/2d/sem_pre_proc'
 attr.set_dir_names()
 attr.batch_size = 128  # try 4, 8, 16, 32, 64, 128, 256 dependent on CPU/GPU memory capacity (powers of 2 values).
-attr.epochs = 50
+attr.epochs = 500
 
 # how many times to execute the training/validation/test cycle
-CYCLES = 5
+CYCLES = 1
 
 for i in range(0, CYCLES):
 
@@ -57,7 +57,7 @@ for i in range(0, CYCLES):
     x = GlobalAveragePooling2D()(x)
     # let's add a fully-connected layer
     x = Dense(1024, activation='relu')(x)
-    drop = Dropout(0.50)(x)
+    drop = Dropout(0.20)(x)
 
     # and a logistic layer -- we have 2 classes
     predictions = Dense(2, activation='softmax')(drop)
@@ -71,7 +71,7 @@ for i in range(0, CYCLES):
         layer.trainable = False
 
     # compile the model (should be done *after* setting layers to non-trainable)
-    attr.model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'], )
+    attr.model.compile(optimizer=SGD(lr=0.0001, momentum=0.9), loss='categorical_crossentropy', metrics=['accuracy'], )
 
     # prepare data augmentation configuration
     train_datagen = create_image_generator(True, True)
@@ -138,14 +138,14 @@ for i in range(0, CYCLES):
     #Save the model after every epoch.
     callbacks_list = [time_callback,
         ModelCheckpoint(attr.curr_basename + "-ckweights.h5", monitor='val_acc', verbose=1, save_best_only=True),
-        EarlyStopping(monitor='val_acc', patience=10, verbose=0)
+        EarlyStopping(monitor='val_acc', patience=50, verbose=0)
     ]
 
     # train the top 2 inception blocks, i.e. we will freeze
-    # the first 172 layers and unfreeze the rest:
-    for layer in attr.model.layers[:172]:
+    # the first 249 layers and unfreeze the rest:
+    for layer in attr.model.layers[:249]:
         layer.trainable = False
-    for layer in attr.model.layers[172:]:
+    for layer in attr.model.layers[249:]:
         layer.trainable = True
 
     # we need to recompile the model for these modifications to take effect
