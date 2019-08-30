@@ -29,7 +29,7 @@ from keras import backend as K
 os.environ["HDF5_USE_FILE_LOCKING"]="FALSE"
 
 # Summary Information
-IMG_TYPE = "sem_pre_proc/"
+IMG_TYPE = "com_pre_proc/"
 SUMMARY_PATH = "/mnt/data/results"
 # SUMMARY_PATH="c:/temp/results"
 # SUMMARY_PATH="/tmp/results"
@@ -177,7 +177,7 @@ for i in range(0, CYCLES):
 
 
     # Compile the model
-    attr.model.compile(loss='categorical_crossentropy', optimizer=SGD(lr=0.0001, momentum=0.9), metrics=['acc'])
+    attr.model.compile(loss='categorical_crossentropy', optimizer=SGD(lr=0.002), metrics=['acc'])
 
     # Persist execution attributes for session resume
     save_execution_attributes(attr, attr.summ_basename + '-execution-attributes.properties')
