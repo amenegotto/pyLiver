@@ -1,7 +1,7 @@
 import pandas as pd
 import glob
 
-CSV_RESULTS_PATHS = '/mnt/data/results/index_final.csv'
+CSV_RESULTS_PATHS = '/mnt/data/results/index_verification.csv'
 
 f_out = None
 
