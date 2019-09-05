@@ -6,7 +6,7 @@ import pandas as pd
 
 
 def trunc(txt):
-    return np.around(txt, decimals=3)
+    return str(txt)[0:5]
 
 
 def print_row(df_wo, df_w, txtTitle, txtColumn):
@@ -22,12 +22,12 @@ def select_rows(df, fusion_type, arch_name):
     df_wo_pre_proc = df_specific.iloc[0]
     df_w_pre_proc = df_specific.iloc[1]
 
-    print_row(df_wo_pre_proc, df_w_pre_proc, 'Acuracia', 'Accuracy')
-    print_row(df_wo_pre_proc, df_w_pre_proc, 'Precisao', 'Precision')
+    print_row(df_wo_pre_proc, df_w_pre_proc, 'Acurácia', 'Accuracy')
+    print_row(df_wo_pre_proc, df_w_pre_proc, 'Precisão', 'Precision')
     print_row(df_wo_pre_proc, df_w_pre_proc, 'Recall', 'Recall')
     print_row(df_wo_pre_proc, df_w_pre_proc, 'F-Score', 'F-Score')
     print_row(df_wo_pre_proc, df_w_pre_proc, 'Kappa Value', 'Kappa Value')
 
 
 df_r = pd.read_csv('csv/results.csv')
-select_rows(df_r, 'Unimodal', 'Ad Hoc Light')
+select_rows(df_r, 'Late Fusion', 'Inception')
